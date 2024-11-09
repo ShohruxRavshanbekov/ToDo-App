@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "uz.futuresoft.navigation"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24

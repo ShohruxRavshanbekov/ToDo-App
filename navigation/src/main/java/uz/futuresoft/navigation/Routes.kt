@@ -8,5 +8,5 @@ object Routes {
     object Home
 
     @Serializable
-    data class TaskEvents(val taskId: String? = null)
+    data class TaskDetails(val taskId: String? = null)
 }

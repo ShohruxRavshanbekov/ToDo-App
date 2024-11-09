@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "uz.futuresoft.tasks"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -38,8 +38,7 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.ui)
-    implementation(projects.core.utils)
+    implementation(projects.core)
     implementation(projects.navigation)
 
     implementation(libs.androidx.core.ktx)

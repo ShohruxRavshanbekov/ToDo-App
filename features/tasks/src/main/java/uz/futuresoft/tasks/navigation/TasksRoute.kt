@@ -5,20 +5,28 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import uz.futuresoft.navigation.Routes
+import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
 import uz.futuresoft.tasks.presentation.home.HomeScreen
-import uz.futuresoft.tasks.presentation.task_events.TaskEventScreen
+import uz.futuresoft.tasks.presentation.task_events.TaskDetailsScreen
 
-fun NavGraphBuilder.tasksRoute(navHostController: NavHostController) {
+fun NavGraphBuilder.tasksRoute(
+    navHostController: NavHostController,
+    todoItemsRepository: TodoItemsRepository,
+) {
     composable<Routes.Home> {
-        HomeScreen(navHostController = navHostController)
+        HomeScreen(
+            navHostController = navHostController,
+            todoItemsRepository = todoItemsRepository,
+        )
     }
 
-    composable<Routes.TaskEvents> {
-        val taskId = it.toRoute<Routes.TaskEvents>().taskId
+    composable<Routes.TaskDetails> {
+        val taskId = it.toRoute<Routes.TaskDetails>().taskId
 
-        TaskEventScreen(
+        TaskDetailsScreen(
             taskId = taskId,
             navHostController = navHostController,
+            todoItemsRepository = todoItemsRepository,
         )
     }
 }

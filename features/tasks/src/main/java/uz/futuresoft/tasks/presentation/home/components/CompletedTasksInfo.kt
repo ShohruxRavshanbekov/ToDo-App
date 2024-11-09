@@ -1,6 +1,5 @@
 package uz.futuresoft.tasks.presentation.home.components
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,12 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import uz.futuresoft.ui.icons.AppIcons
-import uz.futuresoft.ui.icons.Eye
-import uz.futuresoft.ui.icons.EyeSlash
-import uz.futuresoft.ui.theme.ToDoAppTheme
+import uz.futuresoft.core.ui.icons.AppIcons
+import uz.futuresoft.core.ui.icons.Eye
+import uz.futuresoft.core.ui.icons.EyeSlash
+import uz.futuresoft.core.ui.theme.TodoAppTheme
 
 @Composable
 fun CompletedTasksInfo(
@@ -48,11 +47,10 @@ fun CompletedTasksInfo(
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@PreviewLightDark
 @Composable
 private fun CompletedTasksInfoPreview() {
-    ToDoAppTheme {
+    TodoAppTheme {
         CompletedTasksInfo(showCompletedTasks = false, onShowCompletedTasksClick = {})
     }
 }

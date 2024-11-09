@@ -21,13 +21,10 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "ToDoApp"
+rootProject.name = "TodoApp"
 
 include(":app")
-include(":data")
+include(":core")
 include(":navigation")
-
-include(":core:ui")
-include(":core:utils")
 
 include(":features:tasks")
