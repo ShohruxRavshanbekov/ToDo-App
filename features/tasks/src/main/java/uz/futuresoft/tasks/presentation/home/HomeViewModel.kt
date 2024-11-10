@@ -8,26 +8,25 @@ import uz.futuresoft.tasks.domain.models.TodoItem
 import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
 
 class HomeViewModel(
-    private val toDoItemsRepository: TodoItemsRepository,
+    private val todoItemsRepository: TodoItemsRepository,
 ) : ViewModel() {
 
     private val _tasks = MutableStateFlow<List<TodoItem>>(emptyList())
     val tasks: StateFlow<List<TodoItem>>
         get() = _tasks.asStateFlow()
 
-    init {
+
+    fun getTasks() {
+        _tasks.value = todoItemsRepository.getTodos()
+    }
+
+    fun markAsCompleted(id: String, task: TodoItem) {
+        todoItemsRepository.saveTask(id = id, task = task)
         getTasks()
     }
 
-    private fun getTasks() {
-        _tasks.value = toDoItemsRepository.getTodos()
-    }
-
-    fun removeTask(task: TodoItem) {
-        toDoItemsRepository.removeTask(task = task)
-    }
-
-    fun markAsCompleted(task: TodoItem) {
-        toDoItemsRepository.saveTask(task = task)
+    fun removeTask(id: String) {
+        todoItemsRepository.removeTask(id = id)
+        getTasks()
     }
 }

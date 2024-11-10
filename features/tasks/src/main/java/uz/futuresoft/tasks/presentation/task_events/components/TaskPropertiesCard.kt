@@ -17,6 +17,9 @@ import uz.futuresoft.tasks.common.models.TodoItemImportance
 
 @Composable
 fun TaskPropertiesCard(
+    importance: TodoItemImportance,
+    showCalendar: Boolean,
+    initialSelectedDateMillis: Long? = null,
     onImportanceChange: (TodoItemImportance) -> Unit,
     onDateSelected: (Long?) -> Unit,
 ) {
@@ -27,13 +30,18 @@ fun TaskPropertiesCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             TaskImportanceView(
-                onImportanceChange = onImportanceChange
+                importance = importance,
+                onImportanceChange = onImportanceChange,
             )
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 12.dp),
                 thickness = 0.5.dp,
             )
-            TaskDueDateView(onDateSelected = onDateSelected)
+            TaskDueDateView(
+                showCalendar = showCalendar,
+                initialSelectedDateMillis = initialSelectedDateMillis,
+                onDateSelected = onDateSelected
+            )
         }
     }
 }
@@ -43,6 +51,8 @@ fun TaskPropertiesCard(
 private fun TaskPropertiesCardPreview() {
     TodoAppTheme {
         TaskPropertiesCard(
+            importance = TodoItemImportance.NORMAL,
+            showCalendar = false,
             onImportanceChange = {},
             onDateSelected = {},
         )

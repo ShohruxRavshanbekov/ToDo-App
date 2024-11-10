@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,8 +21,9 @@ import uz.futuresoft.core.ui.theme.TodoAppTheme
 
 @Composable
 fun CompletedTasksInfo(
+    completedTasksCount: Int,
     showCompletedTasks: Boolean,
-    onShowCompletedTasksClick: (Boolean) -> Unit,
+    onShowCompletedTasksClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -31,17 +33,21 @@ fun CompletedTasksInfo(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = "Выполнено — 5",
+            text = "Выполнено — $completedTasksCount",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         IconButton(
-            onClick = { onShowCompletedTasksClick(!showCompletedTasks) }
+            onClick = onShowCompletedTasksClick,
+            enabled = completedTasksCount > 0,
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = MaterialTheme.colorScheme.secondary,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         ) {
             Icon(
                 imageVector = if (showCompletedTasks) AppIcons.EyeSlash else AppIcons.Eye,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
             )
         }
     }
@@ -51,6 +57,10 @@ fun CompletedTasksInfo(
 @Composable
 private fun CompletedTasksInfoPreview() {
     TodoAppTheme {
-        CompletedTasksInfo(showCompletedTasks = false, onShowCompletedTasksClick = {})
+        CompletedTasksInfo(
+            completedTasksCount = 0,
+            showCompletedTasks = false,
+            onShowCompletedTasksClick = {},
+        )
     }
 }

@@ -25,7 +25,7 @@ import uz.futuresoft.core.ui.icons.Trash
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 
 @Composable
-fun SwipeBackground(
+fun TodoItemViewSwipeBackground(
     dismissState: SwipeToDismissBoxState,
 ) {
     val color by animateColorAsState(
@@ -61,8 +61,8 @@ fun SwipeBackground(
 
 @PreviewLightDark
 @Composable
-private fun SwipeBackgroundPreview() {
+private fun TodoItemViewSwipeBackgroundPreview() {
     TodoAppTheme {
-        SwipeBackground(dismissState = rememberSwipeToDismissBoxState())
+        TodoItemViewSwipeBackground(dismissState = rememberSwipeToDismissBoxState())
     }
 }

@@ -48,7 +48,6 @@ fun TodoItemLeadingContent(
         AppIcons.PriorityLow
     } else {
         AppIcons.PriorityHigh
-
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {

@@ -6,25 +6,28 @@ import java.util.Calendar
 import java.util.UUID
 
 class TodoItemsRepository {
-    fun getTodos(): List<TodoItem> = tasks
+
+    fun getTodos(): List<TodoItem> = tasks.sortedByDescending { it.createdAt }
 
     fun requireTaskById(id: String): TodoItem =
-        requireNotNull(tasks.find { it.id == id }) { "Значение с id=$id не существует!" }
+        requireNotNull(tasks.find { it.id == id }) { "Значение с id = $id не существует!" }
 
     fun addTask(task: TodoItem) {
         tasks.add(task)
     }
 
-    fun saveTask(task: TodoItem) {
-        val index = tasks.indexOf(task)
-        tasks.add(index = index, element = task)
+    fun saveTask(id: String, task: TodoItem) {
+        val targetTask = requireTaskById(id = id)
+        val index = tasks.indexOf(targetTask)
+        tasks[index] = task
     }
 
-    fun removeTask(task: TodoItem) {
-        tasks.remove(task)
+    fun removeTask(id: String) {
+        val targetTask = requireTaskById(id = id)
+        tasks.remove(targetTask)
     }
 
-    val tasks = mutableListOf(
+    private val tasks = mutableListOf(
         TodoItem(
             id = UUID.randomUUID().toString(),
             text = "Делать уроки",
@@ -36,7 +39,7 @@ class TodoItemsRepository {
             id = UUID.randomUUID().toString(),
             text = "Играть футбол",
             importance = TodoItemImportance.LOW,
-            isCompleted = false,
+            isCompleted = true,
             createdAt = Calendar.getInstance().time
         ),
         TodoItem(
@@ -50,7 +53,7 @@ class TodoItemsRepository {
             id = UUID.randomUUID().toString(),
             text = "Прочитать статью про Kotlin-Coroutines",
             importance = TodoItemImportance.HIGH,
-            isCompleted = false,
+            isCompleted = true,
             createdAt = Calendar.getInstance().time
         ),
         TodoItem(

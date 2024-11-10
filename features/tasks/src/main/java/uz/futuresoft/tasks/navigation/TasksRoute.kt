@@ -12,11 +12,15 @@ import uz.futuresoft.tasks.presentation.task_events.TaskDetailsScreen
 fun NavGraphBuilder.tasksRoute(
     navHostController: NavHostController,
     todoItemsRepository: TodoItemsRepository,
+    darkTheme: Boolean,
+    onChangeTheme: () -> Unit,
 ) {
     composable<Routes.Home> {
         HomeScreen(
             navHostController = navHostController,
             todoItemsRepository = todoItemsRepository,
+            darkTheme = darkTheme,
+            onChangeTheme = onChangeTheme,
         )
     }
 

@@ -2,9 +2,13 @@
 
 package uz.futuresoft.tasks.presentation.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -17,6 +21,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,28 +47,53 @@ import java.util.UUID
 fun HomeScreen(
     navHostController: NavHostController,
     todoItemsRepository: TodoItemsRepository,
+    darkTheme: Boolean,
+    onChangeTheme: () -> Unit,
 ) {
-    val viewModel by remember { mutableStateOf(HomeViewModel(toDoItemsRepository = todoItemsRepository)) }
+    val viewModel by remember { mutableStateOf(HomeViewModel(todoItemsRepository = todoItemsRepository)) }
+    viewModel.getTasks()
     val tasks by viewModel.tasks.collectAsState()
 
     HomeScreenContent(
         tasks = tasks,
-        onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails()) },
-        onMarkItemAsCompleted = { viewModel.markAsCompleted(task = it) },
-        onDeleteItem = { viewModel.removeTask(task = it) }
+        darkTheme = darkTheme,
+        onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails(taskId = null)) },
+        onEditTaskClick = { navHostController.navigate(Routes.TaskDetails(taskId = it)) },
+        onDeleteItem = { viewModel.removeTask(id = it.id) },
+        onChangeTheme = onChangeTheme,
+        onMarkItemAsCompleted = {
+            viewModel.markAsCompleted(
+                id = it.id,
+                task = TodoItem(
+                    id = it.id,
+                    text = it.text,
+                    createdAt = it.createdAt,
+                    importance = it.importance,
+                    isCompleted = true,
+                    deadline = it.deadline,
+                    modifiedAt = it.modifiedAt,
+                )
+            )
+        }
     )
 }
 
 @Composable
 private fun HomeScreenContent(
     tasks: List<TodoItem>,
+    darkTheme: Boolean,
     onAddNewTaskClicked: () -> Unit,
+    onEditTaskClick: (String) -> Unit,
     onMarkItemAsCompleted: (TodoItem) -> Unit,
     onDeleteItem: (TodoItem) -> Unit,
+    onChangeTheme: () -> Unit,
 ) {
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     var showCompletedTasks by remember { mutableStateOf(false) }
+    val lazyListState = rememberLazyListState()
+    val lazyListFirstVisibleItemScrollOffset by
+        remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
 
     Scaffold(
         modifier = Modifier
@@ -73,28 +103,38 @@ private fun HomeScreenContent(
         topBar = {
             HomeScreenTopBar(
                 scrollBehavior = scrollBehavior,
-                onChangeTheme = {}
+                darkTheme = darkTheme,
+                completedTasksCount = tasks.filter { it.isCompleted }.size,
+                onChangeTheme = onChangeTheme,
+                showCompletedTasks = showCompletedTasks,
+                onShowCompletedTasksClick = { showCompletedTasks = !showCompletedTasks },
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                onClick = onAddNewTaskClicked,
+            AnimatedVisibility(
+                visible = lazyListFirstVisibleItemScrollOffset <= 0,
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                Icon(imageVector = AppIcons.Plus, contentDescription = null)
+                FloatingActionButton(
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
+                    onClick = onAddNewTaskClicked,
+                ) {
+                    Icon(imageVector = AppIcons.Plus, contentDescription = null)
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
         TaskList(
-            tasks = tasks,
+            state = lazyListState,
+            tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
             modifier = Modifier.padding(innerPadding),
-            showCompletedTasks = showCompletedTasks,
-            onShowCompletedTaskClick = { showCompletedTasks = it },
-            onAddItemClick = onAddNewTaskClicked,
+            onAddNewTaskClick = onAddNewTaskClicked,
+            onEditTaskClick = onEditTaskClick,
             onMarkItemAsCompleted = onMarkItemAsCompleted,
             onDeleteItem = onDeleteItem,
         )
@@ -129,9 +169,12 @@ private fun HomeScreenPreview() {
                     createdAt = Calendar.getInstance().time
                 ),
             ),
+            darkTheme = false,
             onAddNewTaskClicked = {},
+            onEditTaskClick = {},
             onMarkItemAsCompleted = {},
             onDeleteItem = {},
+            onChangeTheme = {},
         )
     }
 }

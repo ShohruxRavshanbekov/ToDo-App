@@ -16,6 +16,7 @@ import uz.futuresoft.tasks.common.models.TodoItemImportance
 
 @Composable
 fun TaskImportanceView(
+    importance: TodoItemImportance,
     onImportanceChange: (TodoItemImportance) -> Unit,
 ) {
     Row(
@@ -30,7 +31,10 @@ fun TaskImportanceView(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        TodoItemImportanceView(onSelectImportance = onImportanceChange)
+        TodoItemImportanceView(
+            importance = importance,
+            onImportanceChange = onImportanceChange,
+        )
     }
 }
 
@@ -38,6 +42,9 @@ fun TaskImportanceView(
 @Composable
 private fun TaskImportanceViewPreview() {
     TodoAppTheme {
-        TaskImportanceView(onImportanceChange = {})
+        TaskImportanceView(
+            importance = TodoItemImportance.NORMAL,
+            onImportanceChange = {},
+        )
     }
 }

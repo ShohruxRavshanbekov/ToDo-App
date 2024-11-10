@@ -31,10 +31,13 @@ import uz.futuresoft.tasks.utils.formatDateMillisTo
 
 @Composable
 fun TaskDueDateView(
+    showCalendar: Boolean,
+    initialSelectedDateMillis: Long? = null,
     onDateSelected: (Long?) -> Unit,
 ) {
-    var checked by remember { mutableStateOf(true) }
-    val datePickerState = rememberDatePickerState()
+    var isChecked by remember { mutableStateOf(showCalendar) }
+    val datePickerState =
+        rememberDatePickerState(initialSelectedDateMillis = initialSelectedDateMillis)
     val selectedDate = datePickerState.selectedDateMillis?.formatDateMillisTo("d MMM yyyy")
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -51,23 +54,33 @@ fun TaskDueDateView(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (checked && !selectedDate.isNullOrEmpty()) {
-                    VerticalSpacer(height = 2.dp)
-                    Text(
-                        text = selectedDate,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                    onDateSelected(datePickerState.selectedDateMillis)
+                AnimatedContent(
+                    targetState = isChecked && !selectedDate.isNullOrEmpty(),
+                    label = "selectedDate",
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) { state ->
+                    if (state) {
+                        Text(
+                            text = selectedDate!!,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                        onDateSelected(datePickerState.selectedDateMillis)
+                    } else {
+                        onDateSelected(null)
+                    }
                 }
             }
             Switch(
-                checked = checked,
-                onCheckedChange = { checked = it },
+                checked = isChecked,
+                onCheckedChange = { isChecked = it },
             )
         }
-        AnimatedContent(targetState = checked, label = "showCalendar") {
-            if (it) {
+        AnimatedContent(
+            targetState = isChecked,
+            label = "showCalendar",
+        ) { state ->
+            if (state) {
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 12.dp),
                     thickness = 0.5.dp,
@@ -98,6 +111,6 @@ fun TaskDueDateView(
 @Composable
 private fun TaskDueDateViewPreview() {
     TodoAppTheme {
-        TaskDueDateView(onDateSelected = {})
+        TaskDueDateView(showCalendar = false, onDateSelected = {})
     }
 }

@@ -7,24 +7,34 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import uz.futuresoft.core.ui.components.AppAlertDialog
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.tasks.common.models.TodoItemImportance
 import uz.futuresoft.tasks.domain.models.TodoItem
@@ -42,30 +52,66 @@ fun TaskDetailsScreen(
     navHostController: NavHostController,
     todoItemsRepository: TodoItemsRepository,
 ) {
-    val viewModel = TaskDetailsViewModel(toDoItemsRepository = todoItemsRepository)
-    var taskText by remember { mutableStateOf("") }
-    var importance by remember { mutableStateOf(TodoItemImportance.NORMAL) }
-    var deadline by remember { mutableLongStateOf(0L) }
+    val viewModel = TaskDetailsViewModel(todoItemsRepository = todoItemsRepository)
+    val scope = rememberCoroutineScope()
+    if (taskId != null) {
+        viewModel.getTaskById(id = taskId)
+    }
+
+    val task by viewModel.task.collectAsState()
+    val loading by viewModel.loading.collectAsState()
+    var taskText by remember { mutableStateOf(task.text) }
+    var importance by remember { mutableStateOf(task.importance) }
+    var deadline by remember { mutableStateOf(task.deadline?.time) }
+    val initialSelectedDateMillis by remember { mutableStateOf(task.deadline?.time) }
+    val showCalendar by remember { mutableStateOf(deadline != null) }
 
     TaskDetailsScreenContent(
         taskId = taskId,
         taskText = taskText,
+        importance = importance,
+        showCalendar = showCalendar,
+        loading = loading,
         onTaskTextChanged = { taskText = it },
         onBackClicked = { navHostController.popBackStack() },
         onImportanceChanged = { importance = it },
-        onDateSelected = { deadline = it ?: 0L },
+        onDateSelected = { deadline = it },
         onSaveClicked = {
-            viewModel.addTask(
-                task = TodoItem(
-                    id = UUID.randomUUID().toString(),
-                    text = taskText,
-                    importance = importance,
-                    deadline = deadline.convertMillisToDate(),
-                    isCompleted = false,
-                    createdAt = Calendar.getInstance().time,
+            if (taskId == null) {
+                viewModel.addTask(
+                    task = TodoItem(
+                        id = UUID.randomUUID().toString(),
+                        text = taskText,
+                        importance = importance,
+                        deadline = deadline?.convertMillisToDate(),
+                        isCompleted = false,
+                        createdAt = Calendar.getInstance().time,
+                    )
                 )
-            )
+            } else {
+                viewModel.editTask(
+                    id = task.id,
+                    task = TodoItem(
+                        id = task.id,
+                        text = taskText,
+                        importance = importance,
+                        deadline = deadline?.convertMillisToDate(),
+                        isCompleted = task.isCompleted,
+                        createdAt = task.createdAt,
+                        modifiedAt = Calendar.getInstance().time,
+                    )
+                )
+            }
             navHostController.popBackStack()
+        },
+        onDeleteTask = {
+            navHostController.popBackStack()
+            viewModel.removeTask(id = task.id)
+        },
+        initialSelectedDateMillis = if (initialSelectedDateMillis != 0L) {
+            initialSelectedDateMillis
+        } else {
+            null
         },
     )
 }
@@ -74,12 +120,19 @@ fun TaskDetailsScreen(
 private fun TaskDetailsScreenContent(
     taskId: String?,
     taskText: String,
+    importance: TodoItemImportance,
+    showCalendar: Boolean,
+    loading: Boolean,
+    initialSelectedDateMillis: Long? = null,
     onTaskTextChanged: (String) -> Unit,
     onBackClicked: () -> Unit,
     onImportanceChanged: (TodoItemImportance) -> Unit,
     onDateSelected: (Long?) -> Unit,
     onSaveClicked: () -> Unit,
+    onDeleteTask: () -> Unit,
 ) {
+    var showAlertDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -105,6 +158,9 @@ private fun TaskDetailsScreenContent(
                 onValueChanged = onTaskTextChanged,
             )
             TaskPropertiesCard(
+                importance = importance,
+                showCalendar = showCalendar,
+                initialSelectedDateMillis = initialSelectedDateMillis,
                 onImportanceChange = onImportanceChanged,
                 onDateSelected = onDateSelected
             )
@@ -120,14 +176,37 @@ private fun TaskDetailsScreenContent(
                     ),
                     shape = RoundedCornerShape(16.dp),
                     contentPadding = PaddingValues(16.dp),
-                    onClick = {},
+                    onClick = { showAlertDialog = true },
                 ) {
-                    Text(
-                        text = "Удалить",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    if (loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.secondary,
+                            trackColor = MaterialTheme.colorScheme.outline,
+                        )
+                    } else {
+                        Text(
+                            text = "Удалить",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
+        }
+
+        if (showAlertDialog) {
+            AppAlertDialog(
+                messageText = "Вы действительно хотите удалить \"$taskText\"?",
+                confirmText = "Да",
+                dismissText = "Нет",
+                confirmTextColor = MaterialTheme.colorScheme.error,
+                dismissTextColor = MaterialTheme.colorScheme.primary,
+                onConfirm = {
+                    onDeleteTask()
+                    showAlertDialog = false
+                },
+                onDismiss = { showAlertDialog = false }
+            )
         }
     }
 }
@@ -139,11 +218,15 @@ private fun TaskDetailsScreenPreview() {
         TaskDetailsScreenContent(
             taskId = "",
             taskText = "",
+            importance = TodoItemImportance.NORMAL,
+            showCalendar = false,
+            loading = false,
             onTaskTextChanged = {},
             onBackClicked = {},
             onSaveClicked = {},
             onImportanceChanged = {},
             onDateSelected = {},
+            onDeleteTask = {},
         )
     }
 }

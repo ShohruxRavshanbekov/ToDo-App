@@ -2,6 +2,7 @@ package uz.futuresoft.tasks.presentation.home.components.todoitem
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -17,25 +18,29 @@ fun SwipeTodoItemContainer(
     onDelete: (TodoItem) -> Unit,
     content: @Composable (TodoItem) -> Unit,
 ) {
-    val state = rememberSwipeToDismissBoxState()
+    val dismissState = rememberSwipeToDismissBoxState()
 
-    LaunchedEffect(key1 = state.currentValue) {
-        when (state.currentValue) {
+    LaunchedEffect(key1 = dismissState.currentValue) {
+        when (dismissState.currentValue) {
             SwipeToDismissBoxValue.StartToEnd -> {
                 onMarkAsCompleted(item)
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
             }
 
             SwipeToDismissBoxValue.EndToStart -> {
                 onDelete(item)
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
             }
 
-            SwipeToDismissBoxValue.Settled -> {}
+            SwipeToDismissBoxValue.Settled -> {
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            }
         }
     }
     SwipeToDismissBox(
         modifier = modifier.animateContentSize(),
-        state = state,
-        backgroundContent = { SwipeBackground(dismissState = state) },
-        content = { content(item) }
+        state = dismissState,
+        backgroundContent = { TodoItemViewSwipeBackground(dismissState = dismissState) },
+        content = { content(item) },
     )
 }
