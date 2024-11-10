@@ -2,21 +2,20 @@ package uz.futuresoft.tasks.presentation.home.components.todoitem
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import uz.futuresoft.tasks.domain.models.TodoItem
+import uz.futuresoft.tasks.domain.models.ToDoItem
 
 @Composable
 fun SwipeTodoItemContainer(
     modifier: Modifier = Modifier,
-    item: TodoItem,
-    onMarkAsCompleted: (TodoItem) -> Unit,
-    onDelete: (TodoItem) -> Unit,
-    content: @Composable (TodoItem) -> Unit,
+    item: ToDoItem,
+    onMarkAsCompleted: (ToDoItem) -> Unit,
+    onDelete: (ToDoItem) -> Unit,
+    content: @Composable (ToDoItem) -> Unit,
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
 

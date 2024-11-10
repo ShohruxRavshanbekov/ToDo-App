@@ -51,25 +51,12 @@ fun HomeScreenTopBar(
             containerColor = MaterialTheme.colorScheme.background,
         ),
         title = {
-            Column {
-                Text(
-                    text = "Мои дела",
-                    style = if (scrollBehavior.state.collapsedFraction == 0.0f) {
-                        MaterialTheme.typography.displayMedium
-                    } else {
-                        MaterialTheme.typography.titleLarge
-                    }
-                )
-                if (scrollBehavior.state.collapsedFraction == 0.0f) {
-                    VerticalSpacer(height = 8.dp)
-                    CompletedTasksInfo(
-                        completedTasksCount = completedTasksCount,
-                        showCompletedTasks = showCompletedTasks,
-                        onShowCompletedTasksClick = onShowCompletedTasksClick
-                    )
-                }
-            }
-
+            TitleContent(
+                scrollBehavior = scrollBehavior,
+                completedTasksCount = completedTasksCount,
+                showCompletedTasks = showCompletedTasks,
+                onShowCompletedTasksClick = onShowCompletedTasksClick
+            )
         },
         actions = {
             if (scrollBehavior.state.collapsedFraction == 1.0f) {
@@ -107,6 +94,33 @@ fun HomeScreenTopBar(
             }
         },
     )
+}
+
+@Composable
+fun TitleContent(
+    scrollBehavior: TopAppBarScrollBehavior,
+    completedTasksCount: Int,
+    showCompletedTasks: Boolean = false,
+    onShowCompletedTasksClick: () -> Unit = {},
+) {
+    Column {
+        Text(
+            text = "Мои дела",
+            style = if (scrollBehavior.state.collapsedFraction == 0.0f) {
+                MaterialTheme.typography.displayMedium
+            } else {
+                MaterialTheme.typography.titleLarge
+            }
+        )
+        if (scrollBehavior.state.collapsedFraction == 0.0f) {
+            VerticalSpacer(height = 8.dp)
+            CompletedTasksInfo(
+                completedTasksCount = completedTasksCount,
+                showCompletedTasks = showCompletedTasks,
+                onShowCompletedTasksClick = onShowCompletedTasksClick
+            )
+        }
+    }
 }
 
 @PreviewLightDark

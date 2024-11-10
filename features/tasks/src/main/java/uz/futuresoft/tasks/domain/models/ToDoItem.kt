@@ -3,7 +3,7 @@ package uz.futuresoft.tasks.domain.models
 import uz.futuresoft.tasks.common.models.TodoItemImportance
 import java.util.Date
 
-data class TodoItem(
+data class ToDoItem(
     val id: String,
     val text: String,
     val createdAt: Date,

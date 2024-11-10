@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,35 +22,37 @@ import uz.futuresoft.core.ui.icons.PriorityHigh
 import uz.futuresoft.core.ui.icons.PriorityLow
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.TodoItem
+import uz.futuresoft.tasks.domain.models.ToDoItem
 import java.util.Calendar
 
 @Composable
 fun TodoItemLeadingContent(
-    task: TodoItem,
+    task: ToDoItem,
 ) {
-    val taskStateIcon = if (task.isCompleted) {
-        AppIcons.Completed
-    } else if (task.importance == TodoItemImportance.HIGH) {
-        AppIcons.ImportanceHigh
-    } else {
-        AppIcons.ImportanceNormal
+    val taskStateIcon by remember {
+        mutableStateOf(
+            when {
+                task.isCompleted -> AppIcons.Completed
+                task.importance == TodoItemImportance.HIGH -> AppIcons.ImportanceHigh
+                else -> AppIcons.ImportanceNormal
+            }
+        )
     }
 
-    val taskStateIconTint = if (task.isCompleted) {
-        Color.Unspecified
-    } else {
-        if (task.importance == TodoItemImportance.NORMAL || task.importance == TodoItemImportance.LOW) {
-            MaterialTheme.colorScheme.outline
-        } else {
-            Color.Unspecified
-        }
+    val importanceIcon by remember {
+        mutableStateOf(
+            if (task.importance == TodoItemImportance.LOW) {
+                AppIcons.PriorityLow
+            } else {
+                AppIcons.PriorityHigh
+            }
+        )
     }
 
-    val importanceIcon = if (task.importance == TodoItemImportance.LOW) {
-        AppIcons.PriorityLow
-    } else {
-        AppIcons.PriorityHigh
+    val taskStateIconTint = when {
+        task.isCompleted -> Color.Unspecified
+        task.importance == TodoItemImportance.NORMAL || task.importance == TodoItemImportance.LOW -> MaterialTheme.colorScheme.outline
+        else -> Color.Unspecified
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -74,7 +79,7 @@ fun TodoItemLeadingContent(
 private fun TodoItemLeadingContentPreview() {
     TodoAppTheme {
         TodoItemLeadingContent(
-            task = TodoItem(
+            task = ToDoItem(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
                 importance = TodoItemImportance.NORMAL,

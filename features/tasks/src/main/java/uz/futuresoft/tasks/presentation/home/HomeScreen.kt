@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,7 +37,7 @@ import uz.futuresoft.core.ui.icons.Plus
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.navigation.Routes
 import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.TodoItem
+import uz.futuresoft.tasks.domain.models.ToDoItem
 import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
 import uz.futuresoft.tasks.presentation.home.components.HomeScreenTopBar
 import uz.futuresoft.tasks.presentation.home.components.TaskList
@@ -64,7 +65,7 @@ fun HomeScreen(
         onMarkItemAsCompleted = {
             viewModel.markAsCompleted(
                 id = it.id,
-                task = TodoItem(
+                task = ToDoItem(
                     id = it.id,
                     text = it.text,
                     createdAt = it.createdAt,
@@ -80,12 +81,12 @@ fun HomeScreen(
 
 @Composable
 private fun HomeScreenContent(
-    tasks: List<TodoItem>,
+    tasks: List<ToDoItem>,
     darkTheme: Boolean,
     onAddNewTaskClicked: () -> Unit,
     onEditTaskClick: (String) -> Unit,
-    onMarkItemAsCompleted: (TodoItem) -> Unit,
-    onDeleteItem: (TodoItem) -> Unit,
+    onMarkItemAsCompleted: (ToDoItem) -> Unit,
+    onDeleteItem: (ToDoItem) -> Unit,
     onChangeTheme: () -> Unit,
 ) {
     val scrollBehavior =
@@ -93,7 +94,7 @@ private fun HomeScreenContent(
     var showCompletedTasks by remember { mutableStateOf(false) }
     val lazyListState = rememberLazyListState()
     val lazyListFirstVisibleItemScrollOffset by
-        remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
+    remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
 
     Scaffold(
         modifier = Modifier
@@ -147,21 +148,21 @@ private fun HomeScreenPreview() {
     TodoAppTheme {
         HomeScreenContent(
             tasks = listOf(
-                TodoItem(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Делать уроки",
                     importance = TodoItemImportance.NORMAL,
                     isCompleted = false,
                     createdAt = Calendar.getInstance().time
                 ),
-                TodoItem(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
                     importance = TodoItemImportance.LOW,
                     isCompleted = false,
                     createdAt = Calendar.getInstance().time
                 ),
-                TodoItem(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
                     importance = TodoItemImportance.HIGH,

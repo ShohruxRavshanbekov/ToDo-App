@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.TodoItem
+import uz.futuresoft.tasks.domain.models.ToDoItem
 import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
 import java.util.Calendar
 
@@ -21,7 +21,7 @@ class TaskDetailsViewModel(
         get() = _loading.asStateFlow()
 
     private val _task = MutableStateFlow(
-        TodoItem(
+        ToDoItem(
             id = "",
             text = "",
             createdAt = Calendar.getInstance().time,
@@ -29,10 +29,10 @@ class TaskDetailsViewModel(
             isCompleted = false
         )
     )
-    val task: StateFlow<TodoItem>
+    val task: StateFlow<ToDoItem>
         get() = _task.asStateFlow()
 
-    fun addTask(task: TodoItem) {
+    fun addTask(task: ToDoItem) {
         todoItemsRepository.addTask(task = task)
     }
 
@@ -40,7 +40,7 @@ class TaskDetailsViewModel(
         _task.value = todoItemsRepository.requireTaskById(id = id)
     }
 
-    fun editTask(id: String, task: TodoItem) {
+    fun editTask(id: String, task: ToDoItem) {
         todoItemsRepository.saveTask(id = id, task = task)
     }
 
