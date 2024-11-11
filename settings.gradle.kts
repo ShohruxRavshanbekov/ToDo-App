@@ -28,3 +28,6 @@ include(":core")
 include(":navigation")
 
 include(":features:tasks")
+include(":network")
+include(":data")
+include(":local")
