@@ -1,5 +1,3 @@
 package uz.futuresoft.network
 
-fun todosApi(): TodosApi {
-    return retrofit().create(TodosApi::class.java)
-}
+val todosApi = RetrofitClient.retrofit().create(TodosApi::class.java)
