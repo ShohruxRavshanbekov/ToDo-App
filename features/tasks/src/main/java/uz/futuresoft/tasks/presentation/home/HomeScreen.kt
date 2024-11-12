@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,9 +35,9 @@ import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Plus
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.navigation.Routes
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.common.models.ToDoItemState
+import uz.futuresoft.data.repositories.TodoItemsRepository2
 import uz.futuresoft.tasks.presentation.home.components.HomeScreenTopBar
 import uz.futuresoft.tasks.presentation.home.components.TaskList
 import java.util.Calendar
@@ -47,7 +46,7 @@ import java.util.UUID
 @Composable
 fun HomeScreen(
     navHostController: NavHostController,
-    todoItemsRepository: TodoItemsRepository,
+    todoItemsRepository: TodoItemsRepository2,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {
@@ -65,7 +64,7 @@ fun HomeScreen(
         onMarkItemAsCompleted = {
             viewModel.markAsCompleted(
                 id = it.id,
-                task = ToDoItem(
+                task = ToDoItemState(
                     id = it.id,
                     text = it.text,
                     createdAt = it.createdAt,
@@ -81,12 +80,12 @@ fun HomeScreen(
 
 @Composable
 private fun HomeScreenContent(
-    tasks: List<ToDoItem>,
+    tasks: List<ToDoItemState>,
     darkTheme: Boolean,
     onAddNewTaskClicked: () -> Unit,
     onEditTaskClick: (String) -> Unit,
-    onMarkItemAsCompleted: (ToDoItem) -> Unit,
-    onDeleteItem: (ToDoItem) -> Unit,
+    onMarkItemAsCompleted: (ToDoItemState) -> Unit,
+    onDeleteItem: (ToDoItemState) -> Unit,
     onChangeTheme: () -> Unit,
 ) {
     val scrollBehavior =
@@ -148,21 +147,21 @@ private fun HomeScreenPreview() {
     TodoAppTheme {
         HomeScreenContent(
             tasks = listOf(
-                ToDoItem(
+                ToDoItemState(
                     id = UUID.randomUUID().toString(),
                     text = "Делать уроки",
                     importance = TodoItemImportance.NORMAL,
                     isCompleted = false,
                     createdAt = Calendar.getInstance().time
                 ),
-                ToDoItem(
+                ToDoItemState(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
                     importance = TodoItemImportance.LOW,
                     isCompleted = false,
                     createdAt = Calendar.getInstance().time
                 ),
-                ToDoItem(
+                ToDoItemState(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
                     importance = TodoItemImportance.HIGH,

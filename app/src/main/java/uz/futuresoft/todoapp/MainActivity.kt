@@ -2,10 +2,7 @@ package uz.futuresoft.todoapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -17,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.core.utils.AppSharedPreferences
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
+import uz.futuresoft.data.TodoItemsRepository
 import uz.futuresoft.todoapp.navigation.AppNavHost
 
 class MainActivity : ComponentActivity() {
@@ -26,7 +23,7 @@ class MainActivity : ComponentActivity() {
         AppSharedPreferences.create(context = this)
         setContent {
             var darkTheme by remember { mutableStateOf(AppSharedPreferences.get(AppSharedPreferences.KEY_THEME)) }
-            val todoItemsRepository by remember { mutableStateOf(TodoItemsRepository()) }
+            val todoItemsRepository by remember { mutableStateOf(uz.futuresoft.data.TodoItemsRepository()) }
 
             TodoAppTheme(darkTheme = darkTheme) {
                 Content(
@@ -47,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun Content(
-    todoItemsRepository: TodoItemsRepository,
+    todoItemsRepository: uz.futuresoft.data.TodoItemsRepository,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {
@@ -65,7 +62,7 @@ private fun Content(
 private fun ContentPreview() {
     TodoAppTheme {
         Content(
-            todoItemsRepository = TodoItemsRepository(),
+            todoItemsRepository = uz.futuresoft.data.TodoItemsRepository(),
             darkTheme = true,
             onChangeTheme = {},
         )

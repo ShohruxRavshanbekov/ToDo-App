@@ -35,7 +35,7 @@ import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.PriorityHigh
 import uz.futuresoft.core.ui.icons.PriorityLow
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
+import uz.futuresoft.tasks.utils.TodoItemImportance
 
 @Composable
 fun TodoItemImportanceView(

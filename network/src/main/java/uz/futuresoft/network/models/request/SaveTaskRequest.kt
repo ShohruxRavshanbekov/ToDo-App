@@ -1,6 +1,8 @@
 package uz.futuresoft.network.models.request
 
-data class SaveTaskRequest<T>(
+import uz.futuresoft.network.models.TodoDTO
+
+data class SaveTaskRequest(
     val status: String = "ok",
-    val element: T,
+    val element: TodoDTO,
 )

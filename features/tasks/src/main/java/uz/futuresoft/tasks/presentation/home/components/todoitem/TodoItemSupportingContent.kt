@@ -15,13 +15,13 @@ import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Calendar
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.core.utils.formatTo
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.common.models.ToDoItemState
 import java.util.Calendar
 
 @Composable
 fun TodoItemSupportingContent(
-    task: ToDoItem,
+    task: ToDoItemState,
 ) {
     if (task.deadline != null && !task.isCompleted) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -48,7 +48,7 @@ fun TodoItemSupportingContent(
 private fun TodoItemSupportingContentPreview() {
     TodoAppTheme {
         TodoItemSupportingContent(
-            task = ToDoItem(
+            task = ToDoItemState(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
                 importance = TodoItemImportance.NORMAL,

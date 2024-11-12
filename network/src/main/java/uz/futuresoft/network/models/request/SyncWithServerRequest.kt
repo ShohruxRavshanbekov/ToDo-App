@@ -1,6 +1,8 @@
 package uz.futuresoft.network.models.request
 
-data class SyncWithServerRequest<T>(
-    val list: T,
-    val status: String,
+import uz.futuresoft.network.models.TodoDTO
+
+data class SyncWithServerRequest(
+    val list: List<TodoDTO>,
+    val status: String = "ok",
 )

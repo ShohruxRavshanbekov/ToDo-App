@@ -1,23 +1,18 @@
 package uz.futuresoft.todoapp.navigation
 
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOut
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.center
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import uz.futuresoft.navigation.Routes
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
+import uz.futuresoft.data.TodoItemsRepository
 import uz.futuresoft.tasks.navigation.tasksRoute
 
 @Composable
 fun AppNavHost(
-    todoItemsRepository: TodoItemsRepository,
+    todoItemsRepository: uz.futuresoft.data.TodoItemsRepository,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {

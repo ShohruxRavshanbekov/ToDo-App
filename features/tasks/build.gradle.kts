@@ -39,6 +39,7 @@ android {
 
 dependencies {
     implementation(projects.core)
+    implementation(projects.data)
     implementation(projects.navigation)
 
     implementation(libs.androidx.core.ktx)

@@ -5,13 +5,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import uz.futuresoft.navigation.Routes
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
+import uz.futuresoft.data.repositories.TodoItemsRepository2
 import uz.futuresoft.tasks.presentation.home.HomeScreen
 import uz.futuresoft.tasks.presentation.task_events.TaskDetailsScreen
 
 fun NavGraphBuilder.tasksRoute(
     navHostController: NavHostController,
-    todoItemsRepository: TodoItemsRepository,
+    todoItemsRepository: TodoItemsRepository2,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {

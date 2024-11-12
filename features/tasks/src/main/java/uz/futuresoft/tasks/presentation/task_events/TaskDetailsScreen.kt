@@ -18,12 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -31,10 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import uz.futuresoft.core.ui.components.AppAlertDialog
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
-import uz.futuresoft.tasks.presentation.home.HomeViewModel
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.common.models.ToDoItemState
+import uz.futuresoft.data.repositories.TodoItemsRepository2
 import uz.futuresoft.tasks.presentation.task_events.components.TaskDetailsScreenTopBar
 import uz.futuresoft.tasks.presentation.task_events.components.TaskPropertiesCard
 import uz.futuresoft.tasks.presentation.task_events.components.TextInputCard
@@ -46,7 +43,7 @@ import java.util.UUID
 fun TaskDetailsScreen(
     taskId: String? = null,
     navHostController: NavHostController,
-    todoItemsRepository: TodoItemsRepository,
+    todoItemsRepository: TodoItemsRepository2,
 ) {
     val viewModel by remember { mutableStateOf(TaskDetailsViewModel(todoItemsRepository = todoItemsRepository)) }
     if (taskId != null) {
@@ -74,7 +71,7 @@ fun TaskDetailsScreen(
         onSaveClicked = {
             if (taskId == null) {
                 viewModel.addTask(
-                    task = ToDoItem(
+                    task = ToDoItemState(
                         id = UUID.randomUUID().toString(),
                         text = taskText,
                         importance = importance,
@@ -86,7 +83,7 @@ fun TaskDetailsScreen(
             } else {
                 viewModel.editTask(
                     id = task.id,
-                    task = ToDoItem(
+                    task = ToDoItemState(
                         id = task.id,
                         text = taskText,
                         importance = importance,

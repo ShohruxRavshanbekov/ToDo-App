@@ -21,13 +21,13 @@ import uz.futuresoft.core.ui.icons.ImportanceNormal
 import uz.futuresoft.core.ui.icons.PriorityHigh
 import uz.futuresoft.core.ui.icons.PriorityLow
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.common.models.ToDoItemState
 import java.util.Calendar
 
 @Composable
 fun TodoItemLeadingContent(
-    task: ToDoItem,
+    task: ToDoItemState,
 ) {
     val taskStateIcon by remember {
         mutableStateOf(
@@ -79,7 +79,7 @@ fun TodoItemLeadingContent(
 private fun TodoItemLeadingContentPreview() {
     TodoAppTheme {
         TodoItemLeadingContent(
-            task = ToDoItem(
+            task = ToDoItemState(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
                 importance = TodoItemImportance.NORMAL,

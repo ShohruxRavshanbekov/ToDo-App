@@ -1,4 +1,4 @@
-package uz.futuresoft.tasks.common.models
+package uz.futuresoft.tasks.utils
 
 enum class TodoItemImportance {
     LOW,

@@ -1,9 +1,9 @@
-package uz.futuresoft.tasks.domain.models
+package uz.futuresoft.tasks.common.models
 
-import uz.futuresoft.tasks.common.models.TodoItemImportance
+import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Date
 
-data class ToDoItem(
+data class ToDoItemState(
     val id: String,
     val text: String,
     val createdAt: Date,

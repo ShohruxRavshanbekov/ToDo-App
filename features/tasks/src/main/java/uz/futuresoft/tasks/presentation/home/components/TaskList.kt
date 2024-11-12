@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.PlusCircle
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.common.models.ToDoItemState
 import uz.futuresoft.tasks.presentation.home.components.todoitem.SwipeTodoItemContainer
 import uz.futuresoft.tasks.presentation.home.components.todoitem.TodoItemView
 import java.util.Calendar
@@ -32,12 +32,12 @@ import java.util.UUID
 @Composable
 fun TaskList(
     state: LazyListState,
-    tasks: List<ToDoItem>,
+    tasks: List<ToDoItemState>,
     modifier: Modifier = Modifier,
     onAddNewTaskClick: () -> Unit = {},
     onEditTaskClick: (String) -> Unit = {},
-    onMarkItemAsCompleted: (ToDoItem) -> Unit = {},
-    onDeleteItem: (ToDoItem) -> Unit = {},
+    onMarkItemAsCompleted: (ToDoItemState) -> Unit = {},
+    onDeleteItem: (ToDoItemState) -> Unit = {},
 ) {
     LazyColumn(
         state = state,
@@ -105,21 +105,21 @@ private fun TaskListPreview() {
         TaskList(
             state = rememberLazyListState(),
             tasks = listOf(
-                ToDoItem(
+                ToDoItemState(
                     id = UUID.randomUUID().toString(),
                     text = "Делать уроки",
                     importance = TodoItemImportance.NORMAL,
                     isCompleted = false,
                     createdAt = Calendar.getInstance().time
                 ),
-                ToDoItem(
+                ToDoItemState(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
                     importance = TodoItemImportance.LOW,
                     isCompleted = false,
                     createdAt = Calendar.getInstance().time
                 ),
-                ToDoItem(
+                ToDoItemState(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
                     importance = TodoItemImportance.HIGH,

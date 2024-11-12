@@ -19,13 +19,13 @@ import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Info
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.common.models.ToDoItemState
 import java.util.Calendar
 
 @Composable
 fun TodoItemView(
-    task: ToDoItem,
+    task: ToDoItemState,
     showDivider: Boolean = true,
     onInfoClick: (String) -> Unit,
 ) {
@@ -84,7 +84,7 @@ fun TodoItemView(
 private fun TodoItemPreview() {
     TodoAppTheme {
         TodoItemView(
-            task = ToDoItem(
+            task = ToDoItemState(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
                 importance = TodoItemImportance.NORMAL,
