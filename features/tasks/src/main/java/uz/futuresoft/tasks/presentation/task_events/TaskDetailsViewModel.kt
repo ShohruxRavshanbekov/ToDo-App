@@ -7,13 +7,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.tasks.common.models.ToDoItemState
-import uz.futuresoft.data.repositories.TodoItemsRepository2
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.tasks.utils.toTodoItem
 import java.util.Calendar
 
 class TaskDetailsViewModel(
-    private val todoItemsRepository: TodoItemsRepository2,
+    private val todoItemsRepository: TodoItemsRepository,
 ) : ViewModel() {
 
     private val _loading = MutableStateFlow(false)
@@ -32,24 +33,19 @@ class TaskDetailsViewModel(
     val task: StateFlow<ToDoItemState>
         get() = _task.asStateFlow()
 
-    fun addTask(task: ToDoItemState) {
-        todoItemsRepository.addTask(task = task)
+    suspend fun getTaskById(id: String) {
+        todoItemsRepository.getTaskById(taskId = id)
     }
 
-    fun getTaskById(id: String) {
-        _task.value = todoItemsRepository.requireTaskById(id = id)
+    fun createTask(revision: Int, task: ToDoItemState) {
+        todoItemsRepository.createTask(revision = revision, task = task.toTodoItem())
     }
 
-    fun editTask(id: String, task: ToDoItemState) {
-        todoItemsRepository.saveTask(id = id, task = task)
+    fun updateTask(taskId: String, task: ToDoItemState) {
+        todoItemsRepository.updateTask(taskId = taskId, task = task.toTodoItem())
     }
 
-    fun removeTask(id: String) {
-        _loading.value = true
-        viewModelScope.launch {
-            delay(1000)
-            todoItemsRepository.removeTask(id = id)
-            _loading.value = false
-        }
+    fun removeTask(taskId: String) {
+        todoItemsRepository.deleteTask(taskId = taskId)
     }
 }

@@ -1,7 +1,7 @@
 package uz.futuresoft.tasks.utils
 
-enum class TodoItemImportance {
-    LOW,
-    HIGH,
-    NORMAL,
+enum class TodoItemImportance(val value: String) {
+    LOW("low"),
+    HIGH("important"),
+    NORMAL("basic"),
 }

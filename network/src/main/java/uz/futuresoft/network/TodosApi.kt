@@ -1,6 +1,7 @@
 package uz.futuresoft.network
 
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HeaderMap
 import retrofit2.http.PATCH
@@ -30,14 +31,19 @@ interface TodosApi {
     ): GetTaskResponse<TodoDTO>
 
     @POST("/list")
-    fun addTask(
+    fun createTask(
         @HeaderMap header: Map<String, Int>,
         @Body task: SaveTaskRequest,
     ): GetTaskResponse<TodoDTO>
 
     @PUT("/list/{id}")
-    fun saveTask(
+    fun updateTask(
         @Path("id") taskId: String,
         @Body editedTask: SaveTaskRequest,
+    ): GetTaskResponse<TodoDTO>
+
+    @DELETE("/list/{id}")
+    fun deleteTask(
+        @Path("id") taskId: String,
     ): GetTaskResponse<TodoDTO>
 }

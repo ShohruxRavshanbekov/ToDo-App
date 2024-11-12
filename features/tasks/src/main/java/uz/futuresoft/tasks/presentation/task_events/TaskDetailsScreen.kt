@@ -70,7 +70,7 @@ fun TaskDetailsScreen(
         onDateSelected = { deadline = it },
         onSaveClicked = {
             if (taskId == null) {
-                viewModel.addTask(
+                viewModel.createTask(
                     task = ToDoItemState(
                         id = UUID.randomUUID().toString(),
                         text = taskText,
@@ -81,7 +81,7 @@ fun TaskDetailsScreen(
                     )
                 )
             } else {
-                viewModel.editTask(
+                viewModel.updateTask(
                     id = task.id,
                     task = ToDoItemState(
                         id = task.id,
