@@ -17,33 +17,33 @@ import uz.futuresoft.network.models.TodoDTO
 
 interface TodosApi {
 
-    @GET("/list")
+    @GET("list")
     suspend fun getTodos(): GetTasksResponse<List<TodoDTO>>
 
-    @PATCH("/list")
+    @PATCH("list")
     suspend fun syncWithServer(
         @Header("X-Last-Known-Revision") revision: Int,
         @Body tasks: SyncWithServerRequest,
     ): GetTasksResponse<List<TodoDTO>>
 
-    @GET("/list/{id}")
+    @GET("list/{id}")
     suspend fun getTaskById(
         @Path("id") taskId: String,
     ): GetTaskResponse<TodoDTO>
 
-    @POST("/list")
+    @POST("list")
     fun createTask(
         @Header("X-Last-Known-Revision") revision: Int,
         @Body task: SaveTaskRequest,
     ): GetTaskResponse<TodoDTO>
 
-    @PUT("/list/{id}")
+    @PUT("list/{id}")
     fun updateTask(
         @Path("id") taskId: String,
         @Body editedTask: SaveTaskRequest,
     ): GetTaskResponse<TodoDTO>
 
-    @DELETE("/list/{id}")
+    @DELETE("list/{id}")
     fun deleteTask(
         @Path("id") taskId: String,
     ): GetTaskResponse<TodoDTO>

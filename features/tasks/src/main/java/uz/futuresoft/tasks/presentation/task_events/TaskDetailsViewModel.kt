@@ -2,15 +2,13 @@ package uz.futuresoft.tasks.presentation.task_events
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository
-import uz.futuresoft.tasks.common.models.ToDoItemState
 import uz.futuresoft.tasks.utils.TodoItemImportance
-import uz.futuresoft.tasks.utils.toTodoItem
 import java.util.Calendar
 
 class TaskDetailsViewModel(
@@ -21,28 +19,45 @@ class TaskDetailsViewModel(
     val loading: StateFlow<Boolean>
         get() = _loading.asStateFlow()
 
+    private val _error: MutableStateFlow<Throwable?> = MutableStateFlow(null)
+    val error: StateFlow<Throwable?>
+        get() = _error.asStateFlow()
+
     private val _task = MutableStateFlow(
-        ToDoItemState(
+        ToDoItem(
             id = "",
             text = "",
-            createdAt = Calendar.getInstance().time,
-            importance = TodoItemImportance.NORMAL,
+            createdAt = Calendar.getInstance().timeInMillis,
+            importance = TodoItemImportance.NORMAL.value,
             isCompleted = false
         )
     )
-    val task: StateFlow<ToDoItemState>
+    val task: StateFlow<ToDoItem>
         get() = _task.asStateFlow()
 
-    suspend fun getTaskById(id: String) {
-        todoItemsRepository.getTaskById(taskId = id)
+    init {
+        _loading.value = true
+        viewModelScope.launch {
+            try {
+                todoItemsRepository.tasksFlow.collect {}
+            } catch (e: Throwable) {
+                _error.value = e
+            } finally {
+                _loading.value = false
+            }
+        }
     }
 
-    fun createTask(revision: Int, task: ToDoItemState) {
-        todoItemsRepository.createTask(revision = revision, task = task.toTodoItem())
+    suspend fun getTaskById(id: String): ToDoItem {
+        return todoItemsRepository.getTaskById(taskId = id)
     }
 
-    fun updateTask(taskId: String, task: ToDoItemState) {
-        todoItemsRepository.updateTask(taskId = taskId, task = task.toTodoItem())
+    fun createTask(revision: Int, task: ToDoItem) {
+        todoItemsRepository.createTask(revision = revision, task = task)
+    }
+
+    fun updateTask(taskId: String, task: ToDoItem) {
+        todoItemsRepository.updateTask(taskId = taskId, task = task)
     }
 
     fun removeTask(taskId: String) {

@@ -2,53 +2,42 @@ package uz.futuresoft.tasks.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository
-import uz.futuresoft.tasks.common.models.ToDoItemState
-import uz.futuresoft.tasks.utils.TodoItemImportance
-import uz.futuresoft.tasks.utils.toTodoItem
-import uz.futuresoft.tasks.utils.toTodoItemState
-import java.util.Calendar
+import java.net.SocketTimeoutException
 
 class HomeViewModel(
     private val todoItemsRepository: TodoItemsRepository,
 ) : ViewModel() {
 
-    private val _tasks = MutableStateFlow<List<ToDoItemState>>(emptyList())
-    val tasks: StateFlow<List<ToDoItemState>>
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean>
+        get() = _loading.asStateFlow()
+
+    private val _error: MutableStateFlow<Throwable?> = MutableStateFlow(null)
+    val error: StateFlow<Throwable?>
+        get() = _error.asStateFlow()
+
+    private val _tasks = MutableStateFlow<List<ToDoItem>>(emptyList())
+    val tasks: StateFlow<List<ToDoItem>>
         get() = _tasks.asStateFlow()
 
-    private val _taskRequestResult = MutableStateFlow(
-        ToDoItemState(
-            id = "",
-            text = "",
-            importance = TodoItemImportance.NORMAL,
-            isCompleted = false,
-            createdAt = Calendar.getInstance().time,
-        )
-    )
-    val taskRequestResult: StateFlow<ToDoItemState>
-        get() = _taskRequestResult.asStateFlow()
-
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        _loading.value = true
+        viewModelScope.launch {
             try {
-                todoItemsRepository.tasksFlow.collect { tasks ->
-                    _tasks.value = tasks.map { it.toTodoItemState() }
-                }
-            } catch (e: Exception) {
-
-            }
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            todoItemsRepository.taskRequestFlow.collect { task ->
-                _taskRequestResult.value = task.toTodoItemState()
+                _loading.value = false
+                todoItemsRepository.tasksFlow.collect { _tasks.value = it }
+            } catch (e: SocketTimeoutException) {
+                _loading.value = false
+                _error.value = Throwable(message = "SocketTimeoutException")
+            } catch (e: Throwable) {
+                _loading.value = false
+                _error.value = e
             }
         }
     }
@@ -57,8 +46,8 @@ class HomeViewModel(
         todoItemsRepository.getTodos()
     }
 
-    fun markAsCompleted(taskId: String, task: ToDoItemState) {
-        todoItemsRepository.updateTask(taskId = taskId, task = task.toTodoItem())
+    fun markAsCompleted(taskId: String, task: ToDoItem) {
+        todoItemsRepository.updateTask(taskId = taskId, task = task)
     }
 
     fun removeTask(taskId: String) {

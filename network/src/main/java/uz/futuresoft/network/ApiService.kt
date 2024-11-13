@@ -1,5 +1,9 @@
 package uz.futuresoft.network
 
+import android.content.Context
+
 object ApiService {
-    val todosApi: TodosApi = RetrofitClient.retrofit().create(TodosApi::class.java)
+    fun todosApi(context: Context): TodosApi {
+        return RetrofitClient.retrofit(context = context).create(TodosApi::class.java)
+    }
 }

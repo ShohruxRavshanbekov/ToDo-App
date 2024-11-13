@@ -37,6 +37,7 @@ import uz.futuresoft.core.ui.theme.TodoAppTheme
 fun HomeScreenTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     darkTheme: Boolean,
+    showCompletedTasksDetailsBar: Boolean,
     completedTasksCount: Int,
     onChangeTheme: () -> Unit,
     showCompletedTasks: Boolean = false,
@@ -46,20 +47,21 @@ fun HomeScreenTopBar(
 
     MediumTopAppBar(
         scrollBehavior = scrollBehavior,
-        expandedHeight = 150.dp,
+        expandedHeight = if (showCompletedTasksDetailsBar) 150.dp else 112.dp,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
         ),
         title = {
             TitleContent(
                 scrollBehavior = scrollBehavior,
+                showCompletedTasksDetailsBar = showCompletedTasksDetailsBar,
                 completedTasksCount = completedTasksCount,
                 showCompletedTasks = showCompletedTasks,
                 onShowCompletedTasksClick = onShowCompletedTasksClick
             )
         },
         actions = {
-            if (scrollBehavior.state.collapsedFraction == 1.0f) {
+            if (showCompletedTasksDetailsBar && scrollBehavior.state.collapsedFraction == 1.0f) {
                 IconButton(
                     onClick = onShowCompletedTasksClick,
                     enabled = completedTasksCount > 0,
@@ -99,6 +101,7 @@ fun HomeScreenTopBar(
 @Composable
 fun TitleContent(
     scrollBehavior: TopAppBarScrollBehavior,
+    showCompletedTasksDetailsBar: Boolean,
     completedTasksCount: Int,
     showCompletedTasks: Boolean = false,
     onShowCompletedTasksClick: () -> Unit = {},
@@ -112,7 +115,7 @@ fun TitleContent(
                 MaterialTheme.typography.titleLarge
             }
         )
-        if (scrollBehavior.state.collapsedFraction == 0.0f) {
+        if (showCompletedTasksDetailsBar && scrollBehavior.state.collapsedFraction == 0.0f) {
             VerticalSpacer(height = 8.dp)
             CompletedTasksInfo(
                 completedTasksCount = completedTasksCount,
@@ -132,6 +135,7 @@ private fun HomeScreenTopBarPreview() {
                 rememberTopAppBarState()
             ),
             darkTheme = false,
+            showCompletedTasksDetailsBar = true,
             completedTasksCount = 0,
             onChangeTheme = {},
             showCompletedTasks = false,

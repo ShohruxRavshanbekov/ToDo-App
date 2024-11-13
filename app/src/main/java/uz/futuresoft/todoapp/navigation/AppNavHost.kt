@@ -1,5 +1,6 @@
 package uz.futuresoft.todoapp.navigation
 
+import android.content.Context
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -7,12 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import uz.futuresoft.navigation.Routes
-import uz.futuresoft.data.TodoItemsRepository
 import uz.futuresoft.tasks.navigation.tasksRoute
 
 @Composable
 fun AppNavHost(
-    todoItemsRepository: uz.futuresoft.data.TodoItemsRepository,
+    context: Context,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {
@@ -28,7 +28,7 @@ fun AppNavHost(
     ) {
         tasksRoute(
             navHostController = navController,
-            todoItemsRepository = todoItemsRepository,
+            context = context,
             darkTheme = darkTheme,
             onChangeTheme = onChangeTheme,
         )

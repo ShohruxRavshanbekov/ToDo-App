@@ -22,7 +22,7 @@ android {
         buildConfigField(
             type = "String",
             name = "BASE_URL",
-            value = "\"https://beta.mrdekk.ru/todo\""
+            value = "\"https://hive.mrdekk.ru/todo/\""
         )
 
         buildConfigField(
@@ -57,6 +57,8 @@ dependencies {
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+
+    debugImplementation(libs.chucker)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

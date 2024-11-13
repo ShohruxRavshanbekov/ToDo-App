@@ -1,5 +1,6 @@
 package uz.futuresoft.todoapp
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.core.utils.AppSharedPreferences
-import uz.futuresoft.data.TodoItemsRepository
 import uz.futuresoft.todoapp.navigation.AppNavHost
 
 class MainActivity : ComponentActivity() {
@@ -22,12 +22,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AppSharedPreferences.create(context = this)
         setContent {
-            var darkTheme by remember { mutableStateOf(AppSharedPreferences.get(AppSharedPreferences.KEY_THEME)) }
-            val todoItemsRepository by remember { mutableStateOf(uz.futuresoft.data.TodoItemsRepository()) }
+            var darkTheme by remember {
+                mutableStateOf(
+                    AppSharedPreferences.getBoolean(
+                        AppSharedPreferences.KEY_THEME
+                    )
+                )
+            }
 
             TodoAppTheme(darkTheme = darkTheme) {
                 Content(
-                    todoItemsRepository = todoItemsRepository,
+                    context = this,
                     darkTheme = darkTheme,
                     onChangeTheme = {
                         darkTheme = !darkTheme
@@ -44,13 +49,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun Content(
-    todoItemsRepository: uz.futuresoft.data.TodoItemsRepository,
+    context: Context,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         AppNavHost(
-            todoItemsRepository = todoItemsRepository,
+            context = context,
             darkTheme = darkTheme,
             onChangeTheme = onChangeTheme,
         )
@@ -62,7 +67,7 @@ private fun Content(
 private fun ContentPreview() {
     TodoAppTheme {
         Content(
-            todoItemsRepository = uz.futuresoft.data.TodoItemsRepository(),
+            context = MainActivity(),
             darkTheme = true,
             onChangeTheme = {},
         )

@@ -5,9 +5,13 @@ package uz.futuresoft.tasks.presentation.home
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,83 +21,114 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Plus
+import uz.futuresoft.core.ui.images.AppImages
+import uz.futuresoft.core.ui.images.NoDataFound
 import uz.futuresoft.core.ui.theme.TodoAppTheme
+import uz.futuresoft.data.models.ToDoItem
+import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.navigation.Routes
-import uz.futuresoft.tasks.utils.TodoItemImportance
-import uz.futuresoft.tasks.common.models.ToDoItemState
-import uz.futuresoft.data.repositories.TodoItemsRepository2
 import uz.futuresoft.tasks.presentation.home.components.HomeScreenTopBar
+import uz.futuresoft.tasks.presentation.home.components.NoDataFoundContent
 import uz.futuresoft.tasks.presentation.home.components.TaskList
+import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Calendar
 import java.util.UUID
 
 @Composable
 fun HomeScreen(
     navHostController: NavHostController,
-    todoItemsRepository: TodoItemsRepository2,
+    todoItemsRepository: TodoItemsRepository,
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {
     val viewModel by remember { mutableStateOf(HomeViewModel(todoItemsRepository = todoItemsRepository)) }
-    viewModel.getTasks()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
     val tasks by viewModel.tasks.collectAsState()
+    var refreshData by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = tasks) {
+        viewModel.getTasks()
+    }
+
+    LaunchedEffect(key1 = refreshData) {
+        if (refreshData) {
+            viewModel.getTasks()
+            refreshData = false
+        }
+    }
 
     HomeScreenContent(
         tasks = tasks,
         darkTheme = darkTheme,
+        error = error,
+        isRefreshing = loading,
+        onRefresh = { refreshData = true },
         onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails(taskId = null)) },
         onEditTaskClick = { navHostController.navigate(Routes.TaskDetails(taskId = it)) },
-        onDeleteItem = { viewModel.removeTask(id = it.id) },
-        onChangeTheme = onChangeTheme,
-        onMarkItemAsCompleted = {
-            viewModel.markAsCompleted(
-                id = it.id,
-                task = ToDoItemState(
-                    id = it.id,
-                    text = it.text,
-                    createdAt = it.createdAt,
-                    importance = it.importance,
-                    isCompleted = true,
-                    deadline = it.deadline,
-                    modifiedAt = it.modifiedAt,
-                )
-            )
-        }
+        onMarkItemAsCompleted = { viewModel.markAsCompleted(taskId = it.id, task = it) },
+        onDeleteItem = { viewModel.removeTask(taskId = it.id) },
+        onChangeTheme = onChangeTheme
     )
 }
 
 @Composable
 private fun HomeScreenContent(
-    tasks: List<ToDoItemState>,
+    tasks: List<ToDoItem>,
     darkTheme: Boolean,
+    error: Throwable?,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onAddNewTaskClicked: () -> Unit,
     onEditTaskClick: (String) -> Unit,
-    onMarkItemAsCompleted: (ToDoItemState) -> Unit,
-    onDeleteItem: (ToDoItemState) -> Unit,
+    onMarkItemAsCompleted: (ToDoItem) -> Unit,
+    onDeleteItem: (ToDoItem) -> Unit,
     onChangeTheme: () -> Unit,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    var showCompletedTasks by remember { mutableStateOf(false) }
     val lazyListState = rememberLazyListState()
     val lazyListFirstVisibleItemScrollOffset by
     remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
+    val snackBarHostState = remember { SnackbarHostState() }
+    val pullToRefreshState = rememberPullToRefreshState()
+    var showCompletedTasks by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = error) {
+        if (error != null) {
+//            snackBarHostState.showSnackbar(message = "Что-то пошло не так!")
+            snackBarHostState.showSnackbar(message = error.localizedMessage ?: "null")
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -104,6 +139,7 @@ private fun HomeScreenContent(
             HomeScreenTopBar(
                 scrollBehavior = scrollBehavior,
                 darkTheme = darkTheme,
+                showCompletedTasksDetailsBar = tasks.isNotEmpty(),
                 completedTasksCount = tasks.filter { it.isCompleted }.size,
                 onChangeTheme = onChangeTheme,
                 showCompletedTasks = showCompletedTasks,
@@ -127,49 +163,74 @@ private fun HomeScreenContent(
                 }
             }
         },
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
-        TaskList(
-            state = lazyListState,
-            tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
-            modifier = Modifier.padding(innerPadding),
-            onAddNewTaskClick = onAddNewTaskClicked,
-            onEditTaskClick = onEditTaskClick,
-            onMarkItemAsCompleted = onMarkItemAsCompleted,
-            onDeleteItem = onDeleteItem,
-        )
+        PullToRefreshBox(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            indicator = {
+                Indicator(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    isRefreshing = isRefreshing,
+                    state = pullToRefreshState,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        ) {
+            if (tasks.isNotEmpty()) {
+                TaskList(
+                    state = lazyListState,
+                    tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
+                    onAddNewTaskClick = onAddNewTaskClicked,
+                    onEditTaskClick = onEditTaskClick,
+                    onMarkItemAsCompleted = onMarkItemAsCompleted,
+                    onDeleteItem = onDeleteItem,
+                )
+            } else {
+                NoDataFoundContent()
+            }
+        }
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun HomeScreenPreview() {
+private fun HomeScreenContentPreview() {
     TodoAppTheme {
         HomeScreenContent(
             tasks = listOf(
-                ToDoItemState(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Делать уроки",
-                    importance = TodoItemImportance.NORMAL,
+                    importance = TodoItemImportance.NORMAL.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
-                ToDoItemState(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
-                    importance = TodoItemImportance.LOW,
+                    importance = TodoItemImportance.LOW.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
+
                 ),
-                ToDoItemState(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
-                    importance = TodoItemImportance.HIGH,
+                    importance = TodoItemImportance.HIGH.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
+
                 ),
             ),
             darkTheme = false,
+            error = Throwable(),
+            isRefreshing = false,
+            onRefresh = {},
             onAddNewTaskClicked = {},
             onEditTaskClick = {},
             onMarkItemAsCompleted = {},

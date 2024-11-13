@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.PlusCircle
 import uz.futuresoft.core.ui.theme.TodoAppTheme
+import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.tasks.utils.TodoItemImportance
-import uz.futuresoft.tasks.common.models.ToDoItemState
 import uz.futuresoft.tasks.presentation.home.components.todoitem.SwipeTodoItemContainer
 import uz.futuresoft.tasks.presentation.home.components.todoitem.TodoItemView
 import java.util.Calendar
@@ -32,12 +32,12 @@ import java.util.UUID
 @Composable
 fun TaskList(
     state: LazyListState,
-    tasks: List<ToDoItemState>,
+    tasks: List<ToDoItem>,
     modifier: Modifier = Modifier,
     onAddNewTaskClick: () -> Unit = {},
     onEditTaskClick: (String) -> Unit = {},
-    onMarkItemAsCompleted: (ToDoItemState) -> Unit = {},
-    onDeleteItem: (ToDoItemState) -> Unit = {},
+    onMarkItemAsCompleted: (ToDoItem) -> Unit = {},
+    onDeleteItem: (ToDoItem) -> Unit = {},
 ) {
     LazyColumn(
         state = state,
@@ -105,26 +105,26 @@ private fun TaskListPreview() {
         TaskList(
             state = rememberLazyListState(),
             tasks = listOf(
-                ToDoItemState(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Делать уроки",
-                    importance = TodoItemImportance.NORMAL,
+                    importance = TodoItemImportance.NORMAL.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
-                ToDoItemState(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
-                    importance = TodoItemImportance.LOW,
+                    importance = TodoItemImportance.LOW.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
-                ToDoItemState(
+                ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
-                    importance = TodoItemImportance.HIGH,
+                    importance = TodoItemImportance.HIGH.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
             ),
         )

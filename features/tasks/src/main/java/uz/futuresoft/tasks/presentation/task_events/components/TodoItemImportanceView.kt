@@ -39,8 +39,8 @@ import uz.futuresoft.tasks.utils.TodoItemImportance
 
 @Composable
 fun TodoItemImportanceView(
-    importance: TodoItemImportance,
-    onImportanceChange: (TodoItemImportance) -> Unit,
+    importance: String,
+    onImportanceChange: (String) -> Unit,
 ) {
     val importanceItemHeight = 32.dp
     val importanceItemWidth = 48.dp
@@ -48,9 +48,10 @@ fun TodoItemImportanceView(
     var taskImportance by remember { mutableStateOf(importance) }
     val offsetX = animateDpAsState(
         targetValue = when (taskImportance) {
-            TodoItemImportance.LOW -> -importanceItemWidth
-            TodoItemImportance.NORMAL -> 0.dp
-            TodoItemImportance.HIGH -> importanceItemWidth
+            TodoItemImportance.LOW.value -> -importanceItemWidth
+            TodoItemImportance.NORMAL.value -> 0.dp
+            TodoItemImportance.HIGH.value -> importanceItemWidth
+            else -> 0.dp
         },
         animationSpec = tween(durationMillis = 300),
         label = "offset"
@@ -78,7 +79,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.LOW
+                        taskImportance = TodoItemImportance.LOW.value
                         onImportanceChange(taskImportance)
                     }
                 ) {
@@ -99,7 +100,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.NORMAL
+                        taskImportance = TodoItemImportance.NORMAL.value
                         onImportanceChange(taskImportance)
                     },
                     colors = ButtonDefaults.textButtonColors(
@@ -122,7 +123,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.HIGH
+                        taskImportance = TodoItemImportance.HIGH.value
                         onImportanceChange(taskImportance)
                     }
                 ) {
@@ -142,7 +143,7 @@ fun TodoItemImportanceView(
 private fun ToDoItemImportanceViewPreview() {
     TodoAppTheme {
         TodoItemImportanceView(
-            importance = TodoItemImportance.NORMAL,
+            importance = TodoItemImportance.NORMAL.value,
             onImportanceChange = {},
         )
     }

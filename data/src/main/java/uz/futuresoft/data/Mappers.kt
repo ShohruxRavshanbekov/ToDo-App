@@ -9,9 +9,9 @@ internal fun TodoDTO.toToDoItem(): ToDoItem {
         text = this.text.toString(),
         createdAt = this.createdAt ?: 0L,
         importance = this.importance.toString(),
-        done = this.done ?: false,
+        isCompleted = this.done ?: false,
         deadline = this.deadline,
-        changedAt = this.changedAt,
+        modifiedAt = this.changedAt,
     )
 }
 
@@ -21,8 +21,8 @@ internal fun ToDoItem.toTodoDTO(): TodoDTO {
         text = this.text,
         createdAt = this.createdAt,
         importance = this.importance,
-        done = this.done,
+        done = this.isCompleted,
         deadline = this.deadline,
-        changedAt = this.changedAt,
+        changedAt = this.modifiedAt,
     )
 }

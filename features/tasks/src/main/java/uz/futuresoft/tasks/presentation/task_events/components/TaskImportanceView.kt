@@ -16,8 +16,8 @@ import uz.futuresoft.tasks.utils.TodoItemImportance
 
 @Composable
 fun TaskImportanceView(
-    importance: TodoItemImportance,
-    onImportanceChange: (TodoItemImportance) -> Unit,
+    importance: String,
+    onImportanceChange: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -43,7 +43,7 @@ fun TaskImportanceView(
 private fun TaskImportanceViewPreview() {
     TodoAppTheme {
         TaskImportanceView(
-            importance = TodoItemImportance.NORMAL,
+            importance = TodoItemImportance.NORMAL.value,
             onImportanceChange = {},
         )
     }

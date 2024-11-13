@@ -5,7 +5,7 @@ data class ToDoItem(
     val text: String,
     val importance: String,
     val deadline: Long? = null,
-    val done: Boolean,
+    val isCompleted: Boolean,
     val createdAt: Long,
-    val changedAt: Long? = null,
+    val modifiedAt: Long? = null,
 )
