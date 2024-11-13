@@ -3,6 +3,7 @@ package uz.futuresoft.network
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.HeaderMap
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -21,7 +22,7 @@ interface TodosApi {
 
     @PATCH("/list")
     suspend fun syncWithServer(
-        @HeaderMap header: Map<String, Int>,
+        @Header("X-Last-Known-Revision") revision: Int,
         @Body tasks: SyncWithServerRequest,
     ): GetTasksResponse<List<TodoDTO>>
 
@@ -32,7 +33,7 @@ interface TodosApi {
 
     @POST("/list")
     fun createTask(
-        @HeaderMap header: Map<String, Int>,
+        @Header("X-Last-Known-Revision") revision: Int,
         @Body task: SaveTaskRequest,
     ): GetTaskResponse<TodoDTO>
 

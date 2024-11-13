@@ -15,23 +15,35 @@ class TodoItemsRepository {
 
     private val todosApi = ApiService.todosApi
 
-    private val _flow = MutableStateFlow(listOf<ToDoItem>())
-    val flow: StateFlow<List<ToDoItem>>
-        get() = _flow.asStateFlow()
+    private val _tasksFlow = MutableStateFlow(listOf<ToDoItem>())
+    val tasksFlow: StateFlow<List<ToDoItem>>
+        get() = _tasksFlow.asStateFlow()
+
+    private val _taskRequestFlow = MutableStateFlow(
+        ToDoItem(
+            id = "",
+            text = "",
+            importance = "",
+            done = false,
+            createdAt = 0L,
+        )
+    )
+    val taskRequestFlow: StateFlow<ToDoItem>
+        get() = _taskRequestFlow.asStateFlow()
 
     suspend fun getTodos() {
         val response = todosApi.getTodos().list.map { it.toToDoItem() }
-        _flow.value = response
+        _tasksFlow.value = response
     }
 
     suspend fun syncWithServer(revision: Int, tasks: List<ToDoItem>) {
-        val header = mapOf("X-Last-Known-Revision" to revision)
+        val header = mapOf("" to revision)
         val tasksToSync = SyncWithServerRequest(list = tasks.map { it.toTodoDTO() })
         val response = todosApi.syncWithServer(
-            header = header,
+            revision = revision,
             tasks = tasksToSync
         ).list.map { it.toToDoItem() }
-        _flow.update { response }
+        _tasksFlow.update { response }
     }
 
     suspend fun getTaskById(taskId: String): ToDoItem {
@@ -40,10 +52,9 @@ class TodoItemsRepository {
     }
 
     fun createTask(revision: Int, task: ToDoItem): ToDoItem {
-        val header = mapOf("X-Last-Known-Revision" to revision)
         val newTask = SaveTaskRequest(element = task.toTodoDTO())
 //        val response = todosApi.createTask(header = header, task = newTask).element.toToDoItem()
-        return todosApi.createTask(header = header, task = newTask).element.toToDoItem()
+        return todosApi.createTask(revision = revision, task = newTask).element.toToDoItem()
     }
 
     fun updateTask(taskId: String, task: ToDoItem): ToDoItem {
