@@ -23,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -31,14 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import uz.futuresoft.core.ui.components.AppAlertDialog
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
-import uz.futuresoft.tasks.presentation.home.HomeViewModel
+import uz.futuresoft.core.utils.AppSharedPreferences
+import uz.futuresoft.data.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
+import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.tasks.presentation.task_events.components.TaskDetailsScreenTopBar
 import uz.futuresoft.tasks.presentation.task_events.components.TaskPropertiesCard
 import uz.futuresoft.tasks.presentation.task_events.components.TextInputCard
-import uz.futuresoft.tasks.utils.convertMillisToDate
 import java.util.Calendar
 import java.util.UUID
 
@@ -49,17 +47,19 @@ fun TaskDetailsScreen(
     todoItemsRepository: TodoItemsRepository,
 ) {
     val viewModel by remember { mutableStateOf(TaskDetailsViewModel(todoItemsRepository = todoItemsRepository)) }
-    if (taskId != null) {
-        viewModel.getTaskById(id = taskId)
-    }
-
     val task by viewModel.task.collectAsState()
     val loading by viewModel.loading.collectAsState()
     var taskText by remember { mutableStateOf(task.text) }
     var importance by remember { mutableStateOf(task.importance) }
-    var deadline by remember { mutableStateOf(task.deadline?.time) }
-    val initialSelectedDateMillis by remember { mutableStateOf(task.deadline?.time) }
+    var deadline by remember { mutableStateOf(task.deadline) }
+    val initialSelectedDateMillis by remember { mutableStateOf(task.deadline) }
     val showCalendar by remember { mutableStateOf(deadline != null) }
+
+    LaunchedEffect(key1 = taskId) {
+        if (taskId != null) {
+            viewModel.getTaskById(id = taskId)
+        }
+    }
 
     TaskDetailsScreenContent(
         taskId = taskId,
@@ -73,35 +73,38 @@ fun TaskDetailsScreen(
         onDateSelected = { deadline = it },
         onSaveClicked = {
             if (taskId == null) {
-                viewModel.addTask(
+                val revision =
+                    AppSharedPreferences.getInt(key = AppSharedPreferences.KEY_REVISION) + 1
+                viewModel.createTask(
+                    revision = revision,
                     task = ToDoItem(
                         id = UUID.randomUUID().toString(),
                         text = taskText,
                         importance = importance,
-                        deadline = deadline?.convertMillisToDate(),
+                        deadline = deadline,
                         isCompleted = false,
-                        createdAt = Calendar.getInstance().time,
+                        createdAt = Calendar.getInstance().timeInMillis,
                     )
                 )
             } else {
-                viewModel.editTask(
-                    id = task.id,
+                viewModel.updateTask(
+                    taskId = task.id,
                     task = ToDoItem(
                         id = task.id,
                         text = taskText,
                         importance = importance,
-                        deadline = deadline?.convertMillisToDate(),
+                        deadline = deadline,
                         isCompleted = task.isCompleted,
                         createdAt = task.createdAt,
-                        modifiedAt = Calendar.getInstance().time,
+                        modifiedAt = Calendar.getInstance().timeInMillis,
                     )
                 )
             }
             navHostController.popBackStack()
         },
         onDeleteTask = {
-            navHostController.popBackStack()
-            viewModel.removeTask(id = task.id)
+//            navHostController.popBackStack()
+            viewModel.removeTask(taskId = task.id)
         },
         initialSelectedDateMillis = if (initialSelectedDateMillis != 0L) {
             initialSelectedDateMillis
@@ -115,13 +118,13 @@ fun TaskDetailsScreen(
 private fun TaskDetailsScreenContent(
     taskId: String?,
     taskText: String,
-    importance: TodoItemImportance,
+    importance: String,
     showCalendar: Boolean,
     loading: Boolean,
     initialSelectedDateMillis: Long? = null,
     onTaskTextChanged: (String) -> Unit,
     onBackClicked: () -> Unit,
-    onImportanceChanged: (TodoItemImportance) -> Unit,
+    onImportanceChanged: (String) -> Unit,
     onDateSelected: (Long?) -> Unit,
     onSaveClicked: () -> Unit,
     onDeleteTask: () -> Unit,
@@ -135,6 +138,7 @@ private fun TaskDetailsScreenContent(
         topBar = {
             TaskDetailsScreenTopBar(
                 taskText = taskText,
+                loading = loading,
                 onBackClicked = onBackClicked,
                 onSaveClicked = onSaveClicked
             )
@@ -213,7 +217,7 @@ private fun TaskDetailsScreenPreview() {
         TaskDetailsScreenContent(
             taskId = "",
             taskText = "",
-            importance = TodoItemImportance.NORMAL,
+            importance = TodoItemImportance.NORMAL.value,
             showCalendar = false,
             loading = false,
             onTaskTextChanged = {},

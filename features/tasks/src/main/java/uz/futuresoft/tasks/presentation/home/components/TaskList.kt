@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.PlusCircle
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.data.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
 import uz.futuresoft.tasks.presentation.home.components.todoitem.SwipeTodoItemContainer
 import uz.futuresoft.tasks.presentation.home.components.todoitem.TodoItemView
 import java.util.Calendar
@@ -108,23 +108,23 @@ private fun TaskListPreview() {
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Делать уроки",
-                    importance = TodoItemImportance.NORMAL,
+                    importance = TodoItemImportance.NORMAL.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
-                    importance = TodoItemImportance.LOW,
+                    importance = TodoItemImportance.LOW.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
-                    importance = TodoItemImportance.HIGH,
+                    importance = TodoItemImportance.HIGH.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().time
+                    createdAt = Calendar.getInstance().timeInMillis
                 ),
             ),
         )

@@ -12,12 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
+import uz.futuresoft.tasks.utils.TodoItemImportance
 
 @Composable
 fun TaskImportanceView(
-    importance: TodoItemImportance,
-    onImportanceChange: (TodoItemImportance) -> Unit,
+    importance: String,
+    onImportanceChange: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -43,7 +43,7 @@ fun TaskImportanceView(
 private fun TaskImportanceViewPreview() {
     TodoAppTheme {
         TaskImportanceView(
-            importance = TodoItemImportance.NORMAL,
+            importance = TodoItemImportance.NORMAL.value,
             onImportanceChange = {},
         )
     }
