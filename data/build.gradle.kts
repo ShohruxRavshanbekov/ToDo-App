@@ -33,6 +33,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core)
     implementation(projects.network)
     implementation(projects.local)
 
