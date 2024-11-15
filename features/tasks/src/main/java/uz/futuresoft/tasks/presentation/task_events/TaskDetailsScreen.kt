@@ -63,8 +63,8 @@ fun TaskDetailsScreen(
 
     TaskDetailsScreenContent(
         taskId = taskId,
-        taskText = taskText,
-        importance = importance,
+        taskText = taskText!!,
+        importance = importance!!,
         showCalendar = showCalendar,
         loading = loading,
         onTaskTextChanged = { taskText = it },
@@ -88,7 +88,7 @@ fun TaskDetailsScreen(
                 )
             } else {
                 viewModel.updateTask(
-                    taskId = task.id,
+                    taskId = task.id!!,
                     task = ToDoItem(
                         id = task.id,
                         text = taskText,
@@ -104,7 +104,7 @@ fun TaskDetailsScreen(
         },
         onDeleteTask = {
 //            navHostController.popBackStack()
-            viewModel.removeTask(taskId = task.id)
+            viewModel.removeTask(taskId = task.id!!)
         },
         initialSelectedDateMillis = if (initialSelectedDateMillis != 0L) {
             initialSelectedDateMillis

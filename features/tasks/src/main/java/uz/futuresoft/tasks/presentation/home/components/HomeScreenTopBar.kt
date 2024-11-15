@@ -50,6 +50,7 @@ fun HomeScreenTopBar(
         expandedHeight = if (showCompletedTasksDetailsBar) 150.dp else 112.dp,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.background,
         ),
         title = {
             TitleContent(

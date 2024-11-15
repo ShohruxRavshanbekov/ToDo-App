@@ -35,18 +35,18 @@ class TaskDetailsViewModel(
     val task: StateFlow<ToDoItem>
         get() = _task.asStateFlow()
 
-    init {
-        _loading.value = true
-        viewModelScope.launch {
-            try {
-                todoItemsRepository.tasksFlow.collect {}
-            } catch (e: Throwable) {
-                _error.value = e
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
+//    init {
+//        _loading.value = true
+//        viewModelScope.launch {
+//            try {
+//                todoItemsRepository.tasksFlow.collect {}
+//            } catch (e: Throwable) {
+//                _error.value = e
+//            } finally {
+//                _loading.value = false
+//            }
+//        }
+//    }
 
     suspend fun getTaskById(id: String): ToDoItem {
         return todoItemsRepository.getTaskById(taskId = id)

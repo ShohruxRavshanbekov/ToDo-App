@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -69,34 +72,39 @@ fun HomeScreen(
     darkTheme: Boolean,
     onChangeTheme: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val viewModel by remember { mutableStateOf(HomeViewModel(todoItemsRepository = todoItemsRepository)) }
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
     val tasks by viewModel.tasks.collectAsState()
     var refreshData by remember { mutableStateOf(false) }
 
-    LaunchedEffect(key1 = tasks) {
+    LaunchedEffect(key1 = Unit) {
         viewModel.getTasks()
     }
 
-    LaunchedEffect(key1 = refreshData) {
-        if (refreshData) {
-            viewModel.getTasks()
-            refreshData = false
-        }
-    }
+//    LaunchedEffect(key1 = refreshData) {
+//        if (refreshData) {
+//            viewModel.getTasks()
+//            refreshData = loading
+//        }
+//    }
 
     HomeScreenContent(
         tasks = tasks,
         darkTheme = darkTheme,
         error = error,
         isRefreshing = loading,
-        onRefresh = { refreshData = true },
         onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails(taskId = null)) },
         onEditTaskClick = { navHostController.navigate(Routes.TaskDetails(taskId = it)) },
-        onMarkItemAsCompleted = { viewModel.markAsCompleted(taskId = it.id, task = it) },
-        onDeleteItem = { viewModel.removeTask(taskId = it.id) },
-        onChangeTheme = onChangeTheme
+        onMarkItemAsCompleted = { viewModel.markAsCompleted(taskId = it.id!!, task = it) },
+        onDeleteItem = { viewModel.removeTask(taskId = it.id!!) },
+        onChangeTheme = onChangeTheme,
+        onRefresh = { /*refreshData = true*/
+            scope.launch {
+                viewModel.getTasks()
+            }
+        }
     )
 }
 
@@ -112,21 +120,19 @@ private fun HomeScreenContent(
     onMarkItemAsCompleted: (ToDoItem) -> Unit,
     onDeleteItem: (ToDoItem) -> Unit,
     onChangeTheme: () -> Unit,
+//    onRetry: () -> Unit,
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val lazyListState = rememberLazyListState()
     val lazyListFirstVisibleItemScrollOffset by
     remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
     val snackBarHostState = remember { SnackbarHostState() }
-    val pullToRefreshState = rememberPullToRefreshState()
     var showCompletedTasks by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = error) {
         if (error != null) {
-//            snackBarHostState.showSnackbar(message = "Что-то пошло не так!")
-            snackBarHostState.showSnackbar(message = error.localizedMessage ?: "null")
+            snackBarHostState.showSnackbar(message = "Что-то пошло не так. Пожалуйста, попробуйте заново.")
         }
     }
 
@@ -140,7 +146,7 @@ private fun HomeScreenContent(
                 scrollBehavior = scrollBehavior,
                 darkTheme = darkTheme,
                 showCompletedTasksDetailsBar = tasks.isNotEmpty(),
-                completedTasksCount = tasks.filter { it.isCompleted }.size,
+                completedTasksCount = tasks.filter { it.isCompleted == true }.size,
                 onChangeTheme = onChangeTheme,
                 showCompletedTasks = showCompletedTasks,
                 onShowCompletedTasksClick = { showCompletedTasks = !showCompletedTasks },
@@ -172,26 +178,18 @@ private fun HomeScreenContent(
                 .padding(innerPadding),
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
-            indicator = {
-                Indicator(
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    isRefreshing = isRefreshing,
-                    state = pullToRefreshState,
-                    color = MaterialTheme.colorScheme.secondary,
-                )
-            }
         ) {
             if (tasks.isNotEmpty()) {
                 TaskList(
                     state = lazyListState,
-                    tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
+                    tasks = if (!showCompletedTasks) tasks.filter { it.isCompleted == false } else tasks,
                     onAddNewTaskClick = onAddNewTaskClicked,
                     onEditTaskClick = onEditTaskClick,
                     onMarkItemAsCompleted = onMarkItemAsCompleted,
                     onDeleteItem = onDeleteItem,
                 )
             } else {
-                NoDataFoundContent()
+                NoDataFoundContent(onRetry = onRefresh)
             }
         }
     }

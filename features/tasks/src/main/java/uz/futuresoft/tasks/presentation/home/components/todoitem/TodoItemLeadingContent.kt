@@ -32,7 +32,7 @@ fun TodoItemLeadingContent(
     val taskStateIcon by remember {
         mutableStateOf(
             when {
-                task.isCompleted -> AppIcons.Completed
+                task.isCompleted == true -> AppIcons.Completed
                 task.importance == TodoItemImportance.HIGH.value -> AppIcons.ImportanceHigh
                 else -> AppIcons.ImportanceNormal
             }
@@ -50,7 +50,7 @@ fun TodoItemLeadingContent(
     }
 
     val taskStateIconTint = when {
-        task.isCompleted -> Color.Unspecified
+        task.isCompleted == true -> Color.Unspecified
         task.importance == TodoItemImportance.NORMAL.value || task.importance == TodoItemImportance.LOW.value -> MaterialTheme.colorScheme.outline
         else -> Color.Unspecified
     }
@@ -62,7 +62,7 @@ fun TodoItemLeadingContent(
             contentDescription = null,
             tint = taskStateIconTint
         )
-        if (!task.isCompleted && task.importance != TodoItemImportance.NORMAL.value) {
+        if (task.isCompleted == true && task.importance != TodoItemImportance.NORMAL.value) {
             HorizontalSpacer(width = 5.dp)
             Icon(
                 modifier = Modifier.size(24.dp),

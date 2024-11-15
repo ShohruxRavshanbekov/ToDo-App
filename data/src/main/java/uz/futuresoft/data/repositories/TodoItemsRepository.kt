@@ -18,62 +18,83 @@ import uz.futuresoft.network.models.request.SaveTaskRequest
 import uz.futuresoft.network.models.request.SyncWithServerRequest
 import java.net.SocketTimeoutException
 
-class TodoItemsRepository(
-    private val context: Context,
-) {
+class TodoItemsRepository(private val context: Context) {
 
     private val todosApi = ApiService.todosApi(context = context)
 
-    suspend fun getTodos(): Flow<RequestResult<List<ToDoItem>>> = flow {
-        emit(RequestResult.Loading)
-        try {
-            val response = todosApi.getTodos().list.map { it.toToDoItem() }
-            emit(RequestResult.Success(value = response))
-        } catch (e: SocketTimeoutException) {
-            emit(RequestResult.Failure(exception = Throwable(message = e.message)))
-        } catch (e: Throwable) {
-            emit(RequestResult.Failure(exception = e))
-        }
-    }
+    private val _tasks = MutableStateFlow<List<ToDoItem>>(emptyList())
+    val tasks: StateFlow<List<ToDoItem>>
+        get() = _tasks.asStateFlow()
 
-//    private val _tasksFlow: MutableStateFlow<List<ToDoItem>> = MutableStateFlow(emptyList())
-//    val tasksFlow: StateFlow<List<ToDoItem>>
-//        get() = _tasksFlow.asStateFlow()
-//
-//    private val _taskFlow: MutableStateFlow<ToDoItem> = MutableStateFlow(ToDoItem())
-//    val taskFlow: StateFlow<ToDoItem>
-//        get() = _taskFlow.asStateFlow()
+    private val _error: MutableStateFlow<Throwable?> = MutableStateFlow(null)
+    val error: StateFlow<Throwable?>
+        get() = _error.asStateFlow()
 
 //    suspend fun getTodos() {
+//        try {
 //            val response = todosApi.getTodos().list.map { it.toToDoItem() }
-//        _tasksFlow.value = response
+//            _tasks.value = Result.success(value = response)
+//        } catch (e: Throwable) {
+//            _tasks.value = Result.failure(exception = e)
+//        }
 //    }
-//
-//    suspend fun syncWithServer(revision: Int, tasks: List<ToDoItem>) {
-//        val tasksToSync = SyncWithServerRequest(list = tasks.map { it.toTodoDTO() })
-//        val response = todosApi.syncWithServer(
-//            revision = revision,
-//            tasks = tasksToSync
-//        ).list.map { it.toToDoItem() }
-//        _tasksFlow.updateAndGet { response }
+
+    //    suspend fun getTodos() {
+//        try {
+//            val response = todosApi.getTodos().list.map { it.toToDoItem() }
+//            _tasks.value = Result.success(value = response)
+//        } catch (e: Throwable) {
+//            _tasks.value = Result.failure(exception = e)
+//        }
+////        return try {
+////            val response = todosApi.getTodos().list.map { it.toToDoItem() }
+////            Result.success(value = response)
+////        } catch (e: Throwable) {
+////            Result.failure(exception = e)
+////        }
 //    }
-//
-//    suspend fun getTaskById(taskId: String): ToDoItem {
-//        val task = todosApi.getTaskById(taskId = taskId).element.toToDoItem()
+    suspend fun getTodos() {
+        val response = runCatching { todosApi.getTodos().list.map { it.toToDoItem() } }
+        response
+            .onSuccess { _tasks.value = it }
+            .onFailure { _error.value = it }
+    }
+
+    suspend fun syncWithServer(revision: Int, tasks: List<ToDoItem>) {
+        val tasksToSync = SyncWithServerRequest(list = tasks.map { it.toTodoDTO() })
+        val response = runCatching {
+            todosApi.syncWithServer(
+                revision = revision,
+                tasks = tasksToSync
+            ).list.map { it.toToDoItem() }
+        }
+        response
+            .onSuccess { _tasks.update { it } }
+            .onFailure { _error.value = it }
+    }
+
+    suspend fun getTaskById(taskId: String): ToDoItem {
+        val task = todosApi.getTaskById(taskId = taskId).element.toToDoItem()
 //        _taskFlow.value = task
-//        return task
-//    }
-//
-//    fun createTask(revision: Int, task: ToDoItem) {
-//        val newTask = SaveTaskRequest(element = task.toTodoDTO())
-//        val response = todosApi.createTask(revision = revision, task = newTask).element.toToDoItem()
+        return task
+    }
+
+    fun createTask(revision: Int, task: ToDoItem) {
+        val newTask = SaveTaskRequest(element = task.toTodoDTO())
+        val response = todosApi.createTask(revision = revision, task = newTask).element.toToDoItem()
 //        _tasksFlow.updateAndGet { currentTasks -> currentTasks.plus(response) }
-//    }
-//
-//    fun updateTask(taskId: String, task: ToDoItem) {
-//        val taskToUpdate = SaveTaskRequest(element = task.toTodoDTO())
-//        val response =
-//            todosApi.updateTask(taskId = taskId, editedTask = taskToUpdate).element.toToDoItem()
+    }
+
+    fun updateTask(taskId: String, task: ToDoItem): Result<ToDoItem> {
+        val taskToUpdate = SaveTaskRequest(element = task.toTodoDTO())
+        return try {
+            val response =
+                todosApi.updateTask(taskId = taskId, editedTask = taskToUpdate).element.toToDoItem()
+            Result.success(value = response)
+        } catch (e: Throwable) {
+            Result.failure(exception = e)
+        }
+
 //        _tasksFlow.updateAndGet { currentTasks ->
 //            val targetTask =
 //                requireNotNull(currentTasks.find { it.id == response.id }) { "Элеменет с id = \"${response.id}\" не существует в списке." }
@@ -81,11 +102,16 @@ class TodoItemsRepository(
 //            currentTasks.toMutableList().set(targetTaskIndex, targetTask)
 //            currentTasks
 //        }
-//    }
-//
-//    fun deleteTask(taskId: String) {
-//        val response = todosApi.deleteTask(taskId = taskId).element.toToDoItem()
+    }
+
+    fun deleteTask(taskId: String): Result<ToDoItem> {
+        return try {
+            val response = todosApi.deleteTask(taskId = taskId).element.toToDoItem()
+            Result.success(value = response)
+        } catch (e: Throwable) {
+            Result.failure(exception = e)
+        }
 //        _tasksFlow.updateAndGet { currentTasks -> currentTasks.minus(response) }
 //        Result.success()
-//    }
+    }
 }

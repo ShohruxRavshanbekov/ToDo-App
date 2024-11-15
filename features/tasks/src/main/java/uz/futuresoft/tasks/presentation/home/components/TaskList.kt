@@ -46,7 +46,7 @@ fun TaskList(
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
             .clip(shape = RoundedCornerShape(16.dp)),
     ) {
-        items(items = tasks, key = { it.id }) { task ->
+        items(items = tasks, key = { it.id!! }) { task ->
             SwipeTodoItemContainer(
                 modifier = Modifier.animateItem(),
                 item = task,

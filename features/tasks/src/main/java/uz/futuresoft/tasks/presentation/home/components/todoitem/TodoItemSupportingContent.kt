@@ -24,7 +24,7 @@ import java.util.Date
 fun TodoItemSupportingContent(
     task: ToDoItem,
 ) {
-    if (task.deadline != null && !task.isCompleted) {
+    if (task.deadline != null && task.isCompleted == true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 modifier = Modifier

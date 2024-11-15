@@ -29,7 +29,7 @@ fun TodoItemView(
     showDivider: Boolean = true,
     onInfoClick: (String) -> Unit,
 ) {
-    val taskTitleColor = if (task.isCompleted) {
+    val taskTitleColor = if (task.isCompleted == true) {
         MaterialTheme.colorScheme.onSurfaceVariant
     } else {
         MaterialTheme.colorScheme.onSurface
@@ -46,10 +46,10 @@ fun TodoItemView(
             headlineContent = {
                 Text(
                     modifier = Modifier.padding(bottom = 2.dp),
-                    text = task.text,
+                    text = task.text!!,
                     style = MaterialTheme.typography.bodyMedium,
                     color = taskTitleColor,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                    textDecoration = if (task.isCompleted == true) TextDecoration.LineThrough else null,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -61,7 +61,7 @@ fun TodoItemView(
                 IconButton(
                     modifier = Modifier.size(20.dp),
                     onClick = {
-                        onInfoClick(task.id)
+                        onInfoClick(task.id!!)
                     }
                 ) {
                     Icon(
