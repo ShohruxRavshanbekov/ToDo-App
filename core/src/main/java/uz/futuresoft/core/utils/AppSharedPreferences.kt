@@ -6,7 +6,7 @@ import android.content.SharedPreferences
 object AppSharedPreferences {
     private const val NAME = "todoApp"
     const val KEY_THEME = "theme"
-    const val KEY_REVISION = "theme"
+    const val KEY_REVISION = "revision"
 
     private lateinit var sharedPreferences: SharedPreferences
 

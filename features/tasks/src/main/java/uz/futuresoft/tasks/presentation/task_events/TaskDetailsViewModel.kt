@@ -15,52 +15,69 @@ class TaskDetailsViewModel(
     private val todoItemsRepository: TodoItemsRepository,
 ) : ViewModel() {
 
-    private val _loading = MutableStateFlow(false)
-    val loading: StateFlow<Boolean>
-        get() = _loading.asStateFlow()
+    private val _gettingTaskInProgress = MutableStateFlow(false)
+    val gettingTaskInProgress: StateFlow<Boolean>
+        get() = _gettingTaskInProgress.asStateFlow()
+
+    private val _createTaskInProgress = MutableStateFlow(false)
+    val createTaskInProgress: StateFlow<Boolean>
+        get() = _createTaskInProgress.asStateFlow()
+
+    private val _updateTaskInProgress = MutableStateFlow(false)
+    val updateTaskInProgress: StateFlow<Boolean>
+        get() = _updateTaskInProgress.asStateFlow()
+
+    private val _deletingTaskInProgress = MutableStateFlow(false)
+    val deletingTaskInProgress: StateFlow<Boolean>
+        get() = _deletingTaskInProgress.asStateFlow()
 
     private val _error: MutableStateFlow<Throwable?> = MutableStateFlow(null)
     val error: StateFlow<Throwable?>
         get() = _error.asStateFlow()
 
-    private val _task = MutableStateFlow(
-        ToDoItem(
-            id = "",
-            text = "",
-            createdAt = Calendar.getInstance().timeInMillis,
-            importance = TodoItemImportance.NORMAL.value,
-            isCompleted = false
-        )
-    )
+    private val _task = MutableStateFlow(ToDoItem())
     val task: StateFlow<ToDoItem>
         get() = _task.asStateFlow()
 
-//    init {
-//        _loading.value = true
-//        viewModelScope.launch {
-//            try {
-//                todoItemsRepository.tasksFlow.collect {}
-//            } catch (e: Throwable) {
-//                _error.value = e
-//            } finally {
-//                _loading.value = false
-//            }
-//        }
-//    }
+    init {
+        viewModelScope.launch {
+            todoItemsRepository.task.collect {
+                _task.value = it
+                _gettingTaskInProgress.value = false
+                _createTaskInProgress.value = false
+                _updateTaskInProgress.value = false
+                _deletingTaskInProgress.value = false
+            }
+        }
 
-    suspend fun getTaskById(id: String): ToDoItem {
+        viewModelScope.launch {
+            todoItemsRepository.error.collect {
+                _error.value = it
+                _gettingTaskInProgress.value = false
+                _createTaskInProgress.value = false
+                _updateTaskInProgress.value = false
+                _deletingTaskInProgress.value = false
+            }
+        }
+    }
+
+    suspend fun getTaskById(id: String) {
+        _gettingTaskInProgress.value = true
         return todoItemsRepository.getTaskById(taskId = id)
     }
 
-    fun createTask(revision: Int, task: ToDoItem) {
+    suspend fun createTask(revision: Int, task: ToDoItem) {
+        _createTaskInProgress.value = true
         todoItemsRepository.createTask(revision = revision, task = task)
     }
 
-    fun updateTask(taskId: String, task: ToDoItem) {
-        todoItemsRepository.updateTask(taskId = taskId, task = task)
+    suspend fun updateTask(revision: Int, taskId: String, task: ToDoItem) {
+        _updateTaskInProgress.value = true
+        todoItemsRepository.updateTask(revision = revision, taskId = taskId, task = task)
     }
 
-    fun removeTask(taskId: String) {
-        todoItemsRepository.deleteTask(taskId = taskId)
+    suspend fun removeTask(revision: Int, taskId: String) {
+        _deletingTaskInProgress.value = true
+        todoItemsRepository.deleteTask(revision = revision, taskId = taskId)
     }
 }

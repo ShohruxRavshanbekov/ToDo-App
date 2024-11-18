@@ -4,16 +4,15 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.HeaderMap
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import uz.futuresoft.network.models.TodoDTO
 import uz.futuresoft.network.models.request.SaveTaskRequest
 import uz.futuresoft.network.models.request.SyncWithServerRequest
 import uz.futuresoft.network.models.response.GetTaskResponse
 import uz.futuresoft.network.models.response.GetTasksResponse
-import uz.futuresoft.network.models.TodoDTO
 
 interface TodosApi {
 
@@ -32,19 +31,21 @@ interface TodosApi {
     ): GetTaskResponse<TodoDTO>
 
     @POST("list")
-    fun createTask(
+    suspend fun createTask(
         @Header("X-Last-Known-Revision") revision: Int,
         @Body task: SaveTaskRequest,
     ): GetTaskResponse<TodoDTO>
 
     @PUT("list/{id}")
-    fun updateTask(
+    suspend fun updateTask(
+        @Header("X-Last-Known-Revision") revision: Int,
         @Path("id") taskId: String,
-        @Body editedTask: SaveTaskRequest,
+        @Body taskToUpdate: SaveTaskRequest,
     ): GetTaskResponse<TodoDTO>
 
     @DELETE("list/{id}")
-    fun deleteTask(
+    suspend fun deleteTask(
+        @Header("X-Last-Known-Revision") revision: Int,
         @Path("id") taskId: String,
     ): GetTaskResponse<TodoDTO>
 }

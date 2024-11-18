@@ -87,7 +87,7 @@ private fun TodoItemPreview() {
             task = ToDoItem(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
-                importance = TodoItemImportance.NORMAL.value,
+                importance = TodoItemImportance.LOW.value,
                 isCompleted = false,
                 createdAt = Calendar.getInstance().timeInMillis
             ),

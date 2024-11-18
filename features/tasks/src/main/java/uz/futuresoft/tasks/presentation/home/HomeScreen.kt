@@ -5,14 +5,9 @@ package uz.futuresoft.tasks.presentation.home
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,15 +17,10 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,25 +31,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Plus
-import uz.futuresoft.core.ui.images.AppImages
-import uz.futuresoft.core.ui.images.NoDataFound
 import uz.futuresoft.core.ui.theme.TodoAppTheme
+import uz.futuresoft.core.utils.AppSharedPreferences
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.navigation.Routes
 import uz.futuresoft.tasks.presentation.home.components.HomeScreenTopBar
-import uz.futuresoft.tasks.presentation.home.components.NoDataFoundContent
 import uz.futuresoft.tasks.presentation.home.components.TaskList
 import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Calendar
@@ -73,8 +58,11 @@ fun HomeScreen(
     onChangeTheme: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val lastRevision = AppSharedPreferences.getInt(key = AppSharedPreferences.KEY_REVISION)
     val viewModel by remember { mutableStateOf(HomeViewModel(todoItemsRepository = todoItemsRepository)) }
-    val loading by viewModel.loading.collectAsState()
+    val gettingTasksInProgress by viewModel.gettingTasksInProgress.collectAsState()
+    val markingTaskAsCompletedInProgress by viewModel.markingTaskAsCompletedInProgress.collectAsState()
+    val deletingTaskInProgress by viewModel.deletingTaskInProgress.collectAsState()
     val error by viewModel.error.collectAsState()
     val tasks by viewModel.tasks.collectAsState()
     var refreshData by remember { mutableStateOf(false) }
@@ -83,28 +71,34 @@ fun HomeScreen(
         viewModel.getTasks()
     }
 
-//    LaunchedEffect(key1 = refreshData) {
-//        if (refreshData) {
-//            viewModel.getTasks()
-//            refreshData = loading
-//        }
-//    }
+    LaunchedEffect(key1 = refreshData) {
+        if (refreshData) {
+            viewModel.getTasks()
+            refreshData = false
+        }
+    }
 
     HomeScreenContent(
         tasks = tasks,
         darkTheme = darkTheme,
         error = error,
-        isRefreshing = loading,
+        gettingTasksInProgress = gettingTasksInProgress,
+        markingTaskAsCompletedInProgress = markingTaskAsCompletedInProgress,
+        deletingTaskInProgress = deletingTaskInProgress,
         onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails(taskId = null)) },
         onEditTaskClick = { navHostController.navigate(Routes.TaskDetails(taskId = it)) },
-        onMarkItemAsCompleted = { viewModel.markAsCompleted(taskId = it.id!!, task = it) },
-        onDeleteItem = { viewModel.removeTask(taskId = it.id!!) },
-        onChangeTheme = onChangeTheme,
-        onRefresh = { /*refreshData = true*/
+        onMarkItemAsCompleted = {
             scope.launch {
-                viewModel.getTasks()
+                viewModel.markAsCompleted(revision = lastRevision, taskId = it.id!!, task = it)
             }
-        }
+        },
+        onDeleteItem = {
+            scope.launch {
+                viewModel.removeTask(revision = lastRevision, taskId = it.id!!)
+            }
+        },
+        onChangeTheme = onChangeTheme,
+        onRefresh = { refreshData = true },
     )
 }
 
@@ -113,14 +107,15 @@ private fun HomeScreenContent(
     tasks: List<ToDoItem>,
     darkTheme: Boolean,
     error: Throwable?,
-    isRefreshing: Boolean,
+    gettingTasksInProgress: Boolean,
+    markingTaskAsCompletedInProgress: Boolean,
+    deletingTaskInProgress: Boolean,
     onRefresh: () -> Unit,
     onAddNewTaskClicked: () -> Unit,
     onEditTaskClick: (String) -> Unit,
     onMarkItemAsCompleted: (ToDoItem) -> Unit,
     onDeleteItem: (ToDoItem) -> Unit,
     onChangeTheme: () -> Unit,
-//    onRetry: () -> Unit,
 ) {
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
@@ -176,21 +171,17 @@ private fun HomeScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            isRefreshing = isRefreshing,
+            isRefreshing = gettingTasksInProgress || markingTaskAsCompletedInProgress || deletingTaskInProgress,
             onRefresh = onRefresh,
         ) {
-            if (tasks.isNotEmpty()) {
-                TaskList(
-                    state = lazyListState,
-                    tasks = if (!showCompletedTasks) tasks.filter { it.isCompleted == false } else tasks,
-                    onAddNewTaskClick = onAddNewTaskClicked,
-                    onEditTaskClick = onEditTaskClick,
-                    onMarkItemAsCompleted = onMarkItemAsCompleted,
-                    onDeleteItem = onDeleteItem,
-                )
-            } else {
-                NoDataFoundContent(onRetry = onRefresh)
-            }
+            TaskList(
+                state = lazyListState,
+                tasks = if (!showCompletedTasks) tasks.filter { it.isCompleted == false } else tasks,
+                onAddNewTaskClick = onAddNewTaskClicked,
+                onEditTaskClick = onEditTaskClick,
+                onMarkItemAsCompleted = onMarkItemAsCompleted,
+                onDeleteItem = onDeleteItem,
+            )
         }
     }
 }
@@ -227,7 +218,9 @@ private fun HomeScreenContentPreview() {
             ),
             darkTheme = false,
             error = Throwable(),
-            isRefreshing = false,
+            gettingTasksInProgress = false,
+            markingTaskAsCompletedInProgress = false,
+            deletingTaskInProgress = false,
             onRefresh = {},
             onAddNewTaskClicked = {},
             onEditTaskClick = {},

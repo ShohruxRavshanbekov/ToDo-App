@@ -62,7 +62,7 @@ fun TodoItemLeadingContent(
             contentDescription = null,
             tint = taskStateIconTint
         )
-        if (task.isCompleted == true && task.importance != TodoItemImportance.NORMAL.value) {
+        if (task.isCompleted == false && task.importance != TodoItemImportance.NORMAL.value) {
             HorizontalSpacer(width = 5.dp)
             Icon(
                 modifier = Modifier.size(24.dp),

@@ -24,9 +24,7 @@ import uz.futuresoft.core.ui.images.NoDataFound
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 
 @Composable
-fun NoDataFoundContent(
-    onRetry: () -> Unit,
-) {
+fun NoDataFoundContent() {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -44,14 +42,6 @@ fun NoDataFoundContent(
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        VerticalSpacer(height = 16.dp)
-        IconButton(onClick = onRetry) {
-            Icon(
-                imageVector = AppIcons.Refresh,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-            )
-        }
     }
 }
 
@@ -59,6 +49,6 @@ fun NoDataFoundContent(
 @Composable
 private fun NoDataFoundContentPreview() {
     TodoAppTheme {
-        NoDataFoundContent(onRetry = {})
+        NoDataFoundContent()
     }
 }
