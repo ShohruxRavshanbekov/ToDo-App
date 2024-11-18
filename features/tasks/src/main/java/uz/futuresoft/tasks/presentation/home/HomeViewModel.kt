@@ -1,11 +1,13 @@
 package uz.futuresoft.tasks.presentation.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uz.futuresoft.core.utils.AppSharedPreferences
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository
 
@@ -13,17 +15,15 @@ class HomeViewModel(
     private val todoItemsRepository: TodoItemsRepository,
 ) : ViewModel() {
 
-    private val _gettingTasksInProgress = MutableStateFlow(false)
-    val gettingTasksInProgress: StateFlow<Boolean>
-        get() = _gettingTasksInProgress.asStateFlow()
+    private val lastRevision = AppSharedPreferences.getInt(key = AppSharedPreferences.KEY_REVISION)
 
-    private val _markingTaskAsCompletedInProgress = MutableStateFlow(false)
-    val markingTaskAsCompletedInProgress: StateFlow<Boolean>
-        get() = _markingTaskAsCompletedInProgress.asStateFlow()
+    private val _isTasksLoading = MutableStateFlow(false)
+    val isTasksLoading: StateFlow<Boolean>
+        get() = _isTasksLoading.asStateFlow()
 
-    private val _deletingTaskInProgress = MutableStateFlow(false)
-    val deletingTaskInProgress: StateFlow<Boolean>
-        get() = _deletingTaskInProgress.asStateFlow()
+    private val _isTaskModifyInProgress = MutableStateFlow(false)
+    val isTaskModifyInProgress: StateFlow<Boolean>
+        get() = _isTaskModifyInProgress.asStateFlow()
 
     private val _error: MutableStateFlow<Throwable?> = MutableStateFlow(null)
     val error: StateFlow<Throwable?>
@@ -37,39 +37,42 @@ class HomeViewModel(
         viewModelScope.launch {
             todoItemsRepository.tasks.collect {
                 _tasks.value = it
-                _gettingTasksInProgress.value = false
-                _markingTaskAsCompletedInProgress.value = false
-                _deletingTaskInProgress.value = false
+                _isTasksLoading.value = false
+                _isTaskModifyInProgress.value = false
             }
         }
 
         viewModelScope.launch {
             todoItemsRepository.error.collect {
+                Log.e(null, "ERROR:", it)
                 _error.value = it
-                _gettingTasksInProgress.value = false
-                _markingTaskAsCompletedInProgress.value = false
-                _deletingTaskInProgress.value = false
+                _isTasksLoading.value = false
+                _isTaskModifyInProgress.value = false
             }
         }
     }
 
     suspend fun getTasks() {
-        _gettingTasksInProgress.value = true
+        _isTasksLoading.value = true
         todoItemsRepository.getTodos()
     }
 
-    suspend fun syncWithServer(revision: Int, tasks: List<ToDoItem>) {
-        _gettingTasksInProgress.value = true
-        todoItemsRepository.syncWithServer(revision = revision, tasks = tasks)
+    suspend fun syncWithServer(tasks: List<ToDoItem>) {
+        _isTasksLoading.value = true
+        todoItemsRepository.syncWithServer(revision = lastRevision, tasks = tasks)
     }
 
-    suspend fun markAsCompleted(revision: Int, taskId: String, task: ToDoItem) {
-        _markingTaskAsCompletedInProgress.value = true
-        todoItemsRepository.updateTask(revision = revision, taskId = taskId, task = task)
+    fun markAsCompleted(taskId: String, task: ToDoItem) {
+        _isTaskModifyInProgress.value = true
+        viewModelScope.launch {
+            todoItemsRepository.updateTask(revision = lastRevision, taskId = taskId, task = task)
+        }
     }
 
-    suspend fun removeTask(revision: Int, taskId: String) {
-        _deletingTaskInProgress.value = true
-        todoItemsRepository.deleteTask(revision = revision, taskId = taskId)
+    fun removeTask(taskId: String) {
+        _isTaskModifyInProgress.value = true
+        viewModelScope.launch {
+            todoItemsRepository.deleteTask(revision = lastRevision, taskId = taskId)
+        }
     }
 }

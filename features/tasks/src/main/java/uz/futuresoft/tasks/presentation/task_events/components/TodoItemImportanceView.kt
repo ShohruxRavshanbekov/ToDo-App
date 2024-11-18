@@ -45,9 +45,8 @@ fun TodoItemImportanceView(
     val importanceItemHeight = 32.dp
     val importanceItemWidth = 48.dp
 
-    var taskImportance by remember { mutableStateOf(importance) }
     val offsetX = animateDpAsState(
-        targetValue = when (taskImportance) {
+        targetValue = when (importance) {
             TodoItemImportance.LOW.value -> -importanceItemWidth
             TodoItemImportance.NORMAL.value -> 0.dp
             TodoItemImportance.HIGH.value -> importanceItemWidth
@@ -79,8 +78,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.LOW.value
-                        onImportanceChange(taskImportance)
+                        onImportanceChange(TodoItemImportance.LOW.value)
                     }
                 ) {
                     Icon(
@@ -100,8 +98,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.NORMAL.value
-                        onImportanceChange(taskImportance)
+                        onImportanceChange(TodoItemImportance.NORMAL.value)
                     },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -123,8 +120,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.HIGH.value
-                        onImportanceChange(taskImportance)
+                        onImportanceChange(TodoItemImportance.HIGH.value)
                     }
                 ) {
                     Icon(

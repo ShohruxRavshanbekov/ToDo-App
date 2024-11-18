@@ -4,7 +4,6 @@ package uz.futuresoft.tasks.presentation.task_events.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,7 +23,6 @@ import uz.futuresoft.core.ui.theme.TodoAppTheme
 @Composable
 fun TaskDetailsScreenTopBar(
     taskText: String,
-    loading: Boolean,
     onBackClicked: () -> Unit = {},
     onSaveClicked: () -> Unit = {},
 ) {
@@ -52,18 +50,10 @@ fun TaskDetailsScreenTopBar(
                 ),
                 onClick = onSaveClicked
             ) {
-                if (loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.secondary,
-                        trackColor = MaterialTheme.colorScheme.outline,
-                    )
-                } else {
-                    Text(
-                        text = "Сохранить",
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                }
+                Text(
+                    text = "Сохранить",
+                    style = MaterialTheme.typography.headlineMedium,
+                )
             }
         }
     )
@@ -73,6 +63,6 @@ fun TaskDetailsScreenTopBar(
 @Composable
 private fun TaskDetailsScreenTopBarPreview() {
     TodoAppTheme {
-        TaskDetailsScreenTopBar(taskText = "", loading = false)
+        TaskDetailsScreenTopBar(taskText = "")
     }
 }

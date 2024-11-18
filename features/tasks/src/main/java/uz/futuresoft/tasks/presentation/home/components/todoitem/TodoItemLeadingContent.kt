@@ -29,28 +29,20 @@ import java.util.Calendar
 fun TodoItemLeadingContent(
     task: ToDoItem,
 ) {
-    val taskStateIcon by remember {
-        mutableStateOf(
-            when {
-                task.isCompleted == true -> AppIcons.Completed
-                task.importance == TodoItemImportance.HIGH.value -> AppIcons.ImportanceHigh
-                else -> AppIcons.ImportanceNormal
-            }
-        )
+    val taskStateIcon = when {
+        task.isCompleted -> AppIcons.Completed
+        task.importance == TodoItemImportance.HIGH.value -> AppIcons.ImportanceHigh
+        else -> AppIcons.ImportanceNormal
     }
 
-    val importanceIcon by remember {
-        mutableStateOf(
-            if (task.importance == TodoItemImportance.LOW.value) {
-                AppIcons.PriorityLow
-            } else {
-                AppIcons.PriorityHigh
-            }
-        )
+    val importanceIcon = if (task.importance == TodoItemImportance.LOW.value) {
+        AppIcons.PriorityLow
+    } else {
+        AppIcons.PriorityHigh
     }
 
     val taskStateIconTint = when {
-        task.isCompleted == true -> Color.Unspecified
+        task.isCompleted -> Color.Unspecified
         task.importance == TodoItemImportance.NORMAL.value || task.importance == TodoItemImportance.LOW.value -> MaterialTheme.colorScheme.outline
         else -> Color.Unspecified
     }
@@ -62,7 +54,7 @@ fun TodoItemLeadingContent(
             contentDescription = null,
             tint = taskStateIconTint
         )
-        if (task.isCompleted == false && task.importance != TodoItemImportance.NORMAL.value) {
+        if (!task.isCompleted && task.importance != TodoItemImportance.NORMAL.value) {
             HorizontalSpacer(width = 5.dp)
             Icon(
                 modifier = Modifier.size(24.dp),
@@ -84,7 +76,8 @@ private fun TodoItemLeadingContentPreview() {
                 text = "Посещать лекцию Яндекса :)",
                 importance = TodoItemImportance.NORMAL.value,
                 isCompleted = false,
-                createdAt = Calendar.getInstance().timeInMillis
+                createdAt = Calendar.getInstance().timeInMillis,
+                modifiedAt = Calendar.getInstance().timeInMillis,
             ),
         )
     }

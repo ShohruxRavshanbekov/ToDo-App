@@ -16,9 +16,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,23 +68,23 @@ fun TaskList(
         horizontalAlignment = horizontalAlignment,
         verticalArrangement = verticalArrangement,
     ) {
-        if (tasks.isNotEmpty()) {
-            items(items = tasks, key = { it.id!! }) { task ->
-                SwipeTodoItemContainer(
-                    modifier = Modifier.animateItem(),
-                    item = task,
-                    onMarkAsCompleted = onMarkItemAsCompleted,
-                    onDelete = onDeleteItem,
-                ) {
-                    TodoItemView(
-                        task = task,
-                        onInfoClick = onEditTaskClick
-                    )
-                }
-            }
-        } else {
+        if (tasks.isEmpty()){
             item {
                 NoDataFoundContent()
+            }
+        }
+
+        items(items = tasks, key = { it.id }) { task ->
+            SwipeTodoItemContainer(
+                modifier = Modifier.animateItem(),
+                item = task,
+                onMarkAsCompleted = onMarkItemAsCompleted,
+                onDelete = onDeleteItem,
+            ) {
+                TodoItemView(
+                    task = task,
+                    onInfoClick = onEditTaskClick
+                )
             }
         }
 
@@ -141,21 +138,24 @@ private fun TaskListPreview() {
                     text = "Делать уроки",
                     importance = TodoItemImportance.NORMAL.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().timeInMillis
+                    createdAt = Calendar.getInstance().timeInMillis,
+                    modifiedAt = Calendar.getInstance().timeInMillis,
                 ),
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
                     importance = TodoItemImportance.LOW.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().timeInMillis
+                    createdAt = Calendar.getInstance().timeInMillis,
+                    modifiedAt = Calendar.getInstance().timeInMillis,
                 ),
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
                     importance = TodoItemImportance.HIGH.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().timeInMillis
+                    createdAt = Calendar.getInstance().timeInMillis,
+                    modifiedAt = Calendar.getInstance().timeInMillis,
                 ),
             ),
         )

@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Plus
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.core.utils.AppSharedPreferences
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.navigation.Routes
@@ -58,47 +57,32 @@ fun HomeScreen(
     onChangeTheme: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val lastRevision = AppSharedPreferences.getInt(key = AppSharedPreferences.KEY_REVISION)
     val viewModel by remember { mutableStateOf(HomeViewModel(todoItemsRepository = todoItemsRepository)) }
-    val gettingTasksInProgress by viewModel.gettingTasksInProgress.collectAsState()
-    val markingTaskAsCompletedInProgress by viewModel.markingTaskAsCompletedInProgress.collectAsState()
-    val deletingTaskInProgress by viewModel.deletingTaskInProgress.collectAsState()
+    val isTasksLoading by viewModel.isTasksLoading.collectAsState()
+    val isTaskModifyInProgress by viewModel.isTaskModifyInProgress.collectAsState()
     val error by viewModel.error.collectAsState()
     val tasks by viewModel.tasks.collectAsState()
-    var refreshData by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = Unit) {
         viewModel.getTasks()
-    }
-
-    LaunchedEffect(key1 = refreshData) {
-        if (refreshData) {
-            viewModel.getTasks()
-            refreshData = false
-        }
     }
 
     HomeScreenContent(
         tasks = tasks,
         darkTheme = darkTheme,
         error = error,
-        gettingTasksInProgress = gettingTasksInProgress,
-        markingTaskAsCompletedInProgress = markingTaskAsCompletedInProgress,
-        deletingTaskInProgress = deletingTaskInProgress,
+        isTasksLoading = isTasksLoading,
+        isTaskModifyInProgress = isTaskModifyInProgress,
         onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails(taskId = null)) },
         onEditTaskClick = { navHostController.navigate(Routes.TaskDetails(taskId = it)) },
-        onMarkItemAsCompleted = {
-            scope.launch {
-                viewModel.markAsCompleted(revision = lastRevision, taskId = it.id!!, task = it)
-            }
-        },
-        onDeleteItem = {
-            scope.launch {
-                viewModel.removeTask(revision = lastRevision, taskId = it.id!!)
-            }
-        },
         onChangeTheme = onChangeTheme,
-        onRefresh = { refreshData = true },
+        onMarkItemAsCompleted = { viewModel.markAsCompleted(taskId = it.id, task = it) },
+        onDeleteItem = { viewModel.removeTask(taskId = it.id) },
+        onRefresh = {
+            scope.launch {
+                viewModel.getTasks()
+            }
+        },
     )
 }
 
@@ -107,9 +91,8 @@ private fun HomeScreenContent(
     tasks: List<ToDoItem>,
     darkTheme: Boolean,
     error: Throwable?,
-    gettingTasksInProgress: Boolean,
-    markingTaskAsCompletedInProgress: Boolean,
-    deletingTaskInProgress: Boolean,
+    isTasksLoading: Boolean,
+    isTaskModifyInProgress: Boolean,
     onRefresh: () -> Unit,
     onAddNewTaskClicked: () -> Unit,
     onEditTaskClick: (String) -> Unit,
@@ -141,7 +124,7 @@ private fun HomeScreenContent(
                 scrollBehavior = scrollBehavior,
                 darkTheme = darkTheme,
                 showCompletedTasksDetailsBar = tasks.isNotEmpty(),
-                completedTasksCount = tasks.filter { it.isCompleted == true }.size,
+                completedTasksCount = tasks.filter { it.isCompleted }.size,
                 onChangeTheme = onChangeTheme,
                 showCompletedTasks = showCompletedTasks,
                 onShowCompletedTasksClick = { showCompletedTasks = !showCompletedTasks },
@@ -171,12 +154,12 @@ private fun HomeScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            isRefreshing = gettingTasksInProgress || markingTaskAsCompletedInProgress || deletingTaskInProgress,
+            isRefreshing = isTasksLoading || isTaskModifyInProgress,
             onRefresh = onRefresh,
         ) {
             TaskList(
                 state = lazyListState,
-                tasks = if (!showCompletedTasks) tasks.filter { it.isCompleted == false } else tasks,
+                tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
                 onAddNewTaskClick = onAddNewTaskClicked,
                 onEditTaskClick = onEditTaskClick,
                 onMarkItemAsCompleted = onMarkItemAsCompleted,
@@ -197,30 +180,30 @@ private fun HomeScreenContentPreview() {
                     text = "Делать уроки",
                     importance = TodoItemImportance.NORMAL.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().timeInMillis
+                    createdAt = Calendar.getInstance().timeInMillis,
+                    modifiedAt = Calendar.getInstance().timeInMillis,
                 ),
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Играть футбол",
                     importance = TodoItemImportance.LOW.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().timeInMillis
-
+                    createdAt = Calendar.getInstance().timeInMillis,
+                    modifiedAt = Calendar.getInstance().timeInMillis,
                 ),
                 ToDoItem(
                     id = UUID.randomUUID().toString(),
                     text = "Посещать лекцию Яндекса :)",
                     importance = TodoItemImportance.HIGH.value,
                     isCompleted = false,
-                    createdAt = Calendar.getInstance().timeInMillis
-
+                    createdAt = Calendar.getInstance().timeInMillis,
+                    modifiedAt = Calendar.getInstance().timeInMillis,
                 ),
             ),
             darkTheme = false,
             error = Throwable(),
-            gettingTasksInProgress = false,
-            markingTaskAsCompletedInProgress = false,
-            deletingTaskInProgress = false,
+            isTasksLoading = false,
+            isTaskModifyInProgress = false,
             onRefresh = {},
             onAddNewTaskClicked = {},
             onEditTaskClick = {},

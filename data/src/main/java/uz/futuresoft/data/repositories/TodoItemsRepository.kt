@@ -26,9 +26,10 @@ class TodoItemsRepository(private val context: Context) {
     val tasks: StateFlow<List<ToDoItem>>
         get() = _tasks.asStateFlow()
 
-    private val _task = MutableStateFlow(ToDoItem())
-    val task: StateFlow<ToDoItem>
-        get() = _task.asStateFlow()
+    private val _taskModificationResponse = MutableStateFlow(false)
+    val taskModificationResponse: StateFlow<Boolean>
+        get() = _taskModificationResponse.asStateFlow()
+
 
     suspend fun getTodos() {
         val result = runCatching {
@@ -65,11 +66,8 @@ class TodoItemsRepository(private val context: Context) {
             .onFailure { _error.value = it }
     }
 
-    suspend fun getTaskById(taskId: String) {
-        val result = runCatching { todosApi.getTaskById(taskId = taskId).element.toToDoItem() }
-        result
-            .onSuccess { _task.value = it }
-            .onFailure { _error.value = it }
+    suspend fun getTaskById(taskId: String): ToDoItem {
+        return todosApi.getTaskById(taskId = taskId).element.toToDoItem()
     }
 
     suspend fun createTask(revision: Int, task: ToDoItem) {
@@ -88,6 +86,7 @@ class TodoItemsRepository(private val context: Context) {
         result
             .onSuccess { createdTask ->
                 _tasks.update { currentTasks -> currentTasks.plus(createdTask) }
+                _taskModificationResponse.value = true
             }
             .onFailure { _error.value = it }
     }
@@ -116,17 +115,10 @@ class TodoItemsRepository(private val context: Context) {
                             it
                         }
                     }
-//                    val targetTask =
-//                        requireNotNull(currentTasks.find { it.id == updatedTask.id }) { "Элеменет с id = \"${updatedTask.id}\" не существует в списке." }
-//                    val targetTaskIndex = currentTasks.indexOf(targetTask)
-////                    currentTasks.toMutableList()[targetTaskIndex] = targetTask
-//                    currentTasks.toMutableList().let { it[targetTaskIndex] = targetTask }
-//                    currentTasks
                 }
+                _taskModificationResponse.value = true
             }
-            .onFailure {
-                _error.value = it
-            }
+            .onFailure { _error.value = it }
     }
 
     suspend fun deleteTask(revision: Int, taskId: String) {
@@ -144,6 +136,7 @@ class TodoItemsRepository(private val context: Context) {
         result
             .onSuccess { deletedTask ->
                 _tasks.update { currentTasks -> currentTasks.minus(deletedTask) }
+                _taskModificationResponse.value = true
             }
             .onFailure { _error.value = it }
     }

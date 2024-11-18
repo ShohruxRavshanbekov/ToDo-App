@@ -24,7 +24,7 @@ import java.util.Date
 fun TodoItemSupportingContent(
     task: ToDoItem,
 ) {
-    if (task.deadline != null && task.isCompleted == false) {
+    if (task.deadline != null && !task.isCompleted) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 modifier = Modifier
@@ -54,7 +54,8 @@ private fun TodoItemSupportingContentPreview() {
                 text = "Посещать лекцию Яндекса :)",
                 importance = TodoItemImportance.NORMAL.value,
                 isCompleted = false,
-                createdAt = Calendar.getInstance().timeInMillis
+                createdAt = Calendar.getInstance().timeInMillis,
+                modifiedAt = Calendar.getInstance().timeInMillis,
             )
         )
     }
