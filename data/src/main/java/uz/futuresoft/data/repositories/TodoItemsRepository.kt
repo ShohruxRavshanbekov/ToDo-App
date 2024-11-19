@@ -1,7 +1,6 @@
 package uz.futuresoft.data.repositories
 
 import android.content.Context
-import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,6 +9,10 @@ import uz.futuresoft.core.utils.AppSharedPreferences
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.toToDoItem
 import uz.futuresoft.data.toTodoDTO
+import uz.futuresoft.data.toTodoEntity
+import uz.futuresoft.data.toTodoItem
+import uz.futuresoft.local.LocalDatabase
+import uz.futuresoft.local.localDatabase
 import uz.futuresoft.network.ApiService
 import uz.futuresoft.network.models.request.SaveTaskRequest
 import uz.futuresoft.network.models.request.SyncWithServerRequest
@@ -17,6 +20,7 @@ import uz.futuresoft.network.models.request.SyncWithServerRequest
 class TodoItemsRepository(private val context: Context) {
 
     private val todosApi = ApiService.todosApi(context = context)
+    private val localDatabase = localDatabase(context = context)
 
     private val _error: MutableStateFlow<Throwable?> = MutableStateFlow(null)
     val error: StateFlow<Throwable?>
@@ -30,8 +34,10 @@ class TodoItemsRepository(private val context: Context) {
     val taskModificationResponse: StateFlow<Boolean>
         get() = _taskModificationResponse.asStateFlow()
 
-
     suspend fun getTodos() {
+        val todoDao = localDatabase.todoDao
+        _tasks.value = emptyList()
+        _tasks.value = todoDao.getAllTodos().map { todoEntity -> todoEntity.toTodoItem() }
         val result = runCatching {
             val response = todosApi.getTodos()
             AppSharedPreferences.write(
@@ -42,8 +48,7 @@ class TodoItemsRepository(private val context: Context) {
         }
         result
             .onSuccess {
-                _tasks.value = emptyList()
-                _tasks.value = it
+                todoDao.insertTodos(todos = it.map { todoItem -> todoItem.toTodoEntity() })
             }
             .onFailure { _error.value = it }
     }
@@ -67,7 +72,7 @@ class TodoItemsRepository(private val context: Context) {
     }
 
     suspend fun getTaskById(taskId: String): ToDoItem {
-        return todosApi.getTaskById(taskId = taskId).element.toToDoItem()
+        return localDatabase.todoDao.getTodoById(id = taskId).toTodoItem()
     }
 
     suspend fun createTask(revision: Int, task: ToDoItem) {

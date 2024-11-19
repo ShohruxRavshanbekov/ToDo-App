@@ -1,6 +1,7 @@
 package uz.futuresoft.tasks.presentation.task_events.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
@@ -19,10 +20,11 @@ import uz.futuresoft.core.ui.theme.TodoAppTheme
 @Composable
 fun TextInputCard(
     taskText: String,
+    modifier: Modifier,
     onValueChanged: (String) -> Unit = {},
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
@@ -56,6 +58,6 @@ fun TextInputCard(
 @Composable
 private fun TextInputCardPreview() {
     TodoAppTheme {
-        TextInputCard(taskText = "")
+        TextInputCard(modifier = Modifier, taskText = "")
     }
 }

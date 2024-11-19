@@ -13,20 +13,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +44,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import uz.futuresoft.core.ui.components.AppAlertDialog
+import uz.futuresoft.core.ui.components.LoadingDialog
+import uz.futuresoft.core.ui.components.NetworkStateIndicator
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository
@@ -74,9 +75,7 @@ fun TaskDetailsScreen(
 
     LaunchedEffect(key1 = Unit) {
         if (taskId != null) {
-            if (isNetworkAvailable == true) {
-                viewModel.getTaskById(id = taskId)
-            }
+            viewModel.getTaskById(id = taskId)
         }
     }
 
@@ -140,8 +139,6 @@ private fun TaskDetailsScreenContent(
     var deadline: Long? by remember { mutableStateOf(null) }
     var initialSelectedDateMillis: Long? by remember { mutableStateOf(deadline) }
     val showCalendar by remember { mutableStateOf(deadline != null) }
-    val pullToRefreshState = rememberPullToRefreshState()
-    val isRefreshing = isTaskLoading || isTaskCreatingInProgress || isTaskModifyInProgress
 
     LaunchedEffect(key1 = task) {
         taskText = task.text
@@ -199,7 +196,7 @@ private fun TaskDetailsScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(vertical = 16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -208,10 +205,16 @@ private fun TaskDetailsScreenContent(
                 modifier = Modifier.fillMaxWidth()
             )
             TextInputCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 taskText = taskText,
                 onValueChanged = { taskText = it },
             )
             TaskPropertiesCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 importance = importance,
                 showCalendar = showCalendar,
                 initialSelectedDateMillis = initialSelectedDateMillis,
@@ -220,8 +223,17 @@ private fun TaskDetailsScreenContent(
             )
 
             if (taskId != null) {
-                DeleteTaskButton(onClick = { showAlertDialog = true })
+                DeleteTaskButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    onClick = { showAlertDialog = true }
+                )
             }
+        }
+
+        if (isTaskLoading || isTaskCreatingInProgress || isTaskModifyInProgress) {
+            LoadingDialog()
         }
 
         if (showAlertDialog) {
@@ -242,31 +254,12 @@ private fun TaskDetailsScreenContent(
 }
 
 @Composable
-private fun NetworkStateIndicator(isNetworkAvailable: Boolean?, modifier: Modifier) {
-    AnimatedVisibility(
-        visible = isNetworkAvailable == false,
-        enter = expandIn(),
-        exit = shrinkOut(),
-    ) {
-        Box(
-            modifier = modifier.background(color = MaterialTheme.colorScheme.error),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Нет связи с интернетом, данные могут быть неактуальным!",
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onError,
-            )
-        }
-    }
-}
-
-@Composable
 private fun DeleteTaskButton(
+    modifier: Modifier,
     onClick: () -> Unit,
 ) {
     Button(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.error,

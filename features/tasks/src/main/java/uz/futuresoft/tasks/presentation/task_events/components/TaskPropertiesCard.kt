@@ -19,12 +19,13 @@ import uz.futuresoft.tasks.utils.TodoItemImportance
 fun TaskPropertiesCard(
     importance: String,
     showCalendar: Boolean,
+    modifier: Modifier,
     initialSelectedDateMillis: Long? = null,
     onImportanceChange: (String) -> Unit,
     onDateSelected: (Long?) -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
     ) {
@@ -51,6 +52,7 @@ fun TaskPropertiesCard(
 private fun TaskPropertiesCardPreview() {
     TodoAppTheme {
         TaskPropertiesCard(
+            modifier = Modifier,
             importance = TodoItemImportance.NORMAL.value,
             showCalendar = false,
             onImportanceChange = {},
