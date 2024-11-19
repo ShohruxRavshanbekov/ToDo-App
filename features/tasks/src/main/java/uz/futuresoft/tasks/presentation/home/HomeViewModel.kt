@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uz.futuresoft.core.receivers.NetworkChangeReceiver
 import uz.futuresoft.core.utils.AppSharedPreferences
 import uz.futuresoft.data.models.ToDoItem
 import uz.futuresoft.data.repositories.TodoItemsRepository

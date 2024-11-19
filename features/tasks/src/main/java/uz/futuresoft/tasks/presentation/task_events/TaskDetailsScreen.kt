@@ -2,6 +2,9 @@
 
 package uz.futuresoft.tasks.presentation.task_events
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,12 +34,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import uz.futuresoft.core.ui.components.AppAlertDialog
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.data.models.ToDoItem
@@ -44,6 +51,7 @@ import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.tasks.presentation.task_events.components.TaskDetailsScreenTopBar
 import uz.futuresoft.tasks.presentation.task_events.components.TaskPropertiesCard
 import uz.futuresoft.tasks.presentation.task_events.components.TextInputCard
+import uz.futuresoft.tasks.utils.NetworkChangeHandler
 import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Calendar
 import java.util.UUID
@@ -54,18 +62,38 @@ fun TaskDetailsScreen(
     navHostController: NavHostController,
     todoItemsRepository: TodoItemsRepository,
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
     val viewModel by remember { mutableStateOf(TaskDetailsViewModel(todoItemsRepository = todoItemsRepository)) }
     val task by viewModel.task.collectAsState()
     val isTaskLoading by viewModel.isTaskLoading.collectAsState()
     val isTaskCreatingInProgress by viewModel.isTaskCreatingInProgress.collectAsState()
     val isTaskModifyInProgress by viewModel.isTaskModifyInProgress.collectAsState()
     val error by viewModel.error.collectAsState()
+    var isNetworkAvailable: Boolean? by remember { mutableStateOf(null) }
 
     LaunchedEffect(key1 = Unit) {
         if (taskId != null) {
-            viewModel.getTaskById(id = taskId)
+            if (isNetworkAvailable == true) {
+                viewModel.getTaskById(id = taskId)
+            }
         }
     }
+
+    NetworkChangeHandler(
+        lifecycleOwner = lifecycleOwner,
+        onNetworkAvailable = {
+            isNetworkAvailable = true
+            scope.launch {
+                if (taskId != null) {
+                    viewModel.getTaskById(id = taskId)
+                }
+            }
+        },
+        onNetworkUnavailable = {
+            isNetworkAvailable = false
+        }
+    )
 
     TaskDetailsScreenContent(
         taskId = taskId,
@@ -74,6 +102,7 @@ fun TaskDetailsScreen(
         isTaskCreatingInProgress = isTaskCreatingInProgress,
         isTaskModifyInProgress = isTaskModifyInProgress,
         error = error,
+        isNetworkAvailable = isNetworkAvailable,
         onBackClicked = { navHostController.popBackStack() },
         onDeleteTask = {
             viewModel.removeTask(taskId = task.id)
@@ -98,6 +127,7 @@ private fun TaskDetailsScreenContent(
     isTaskCreatingInProgress: Boolean,
     isTaskModifyInProgress: Boolean,
     error: Throwable?,
+    isNetworkAvailable: Boolean?,
     onBackClicked: () -> Unit,
     onDeleteTask: () -> Unit,
     onCreateTaskClicked: (ToDoItem) -> Unit,
@@ -173,6 +203,10 @@ private fun TaskDetailsScreenContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            NetworkStateIndicator(
+                isNetworkAvailable = isNetworkAvailable,
+                modifier = Modifier.fillMaxWidth()
+            )
             TextInputCard(
                 taskText = taskText,
                 onValueChanged = { taskText = it },
@@ -202,6 +236,26 @@ private fun TaskDetailsScreenContent(
                     showAlertDialog = false
                 },
                 onDismiss = { showAlertDialog = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun NetworkStateIndicator(isNetworkAvailable: Boolean?, modifier: Modifier) {
+    AnimatedVisibility(
+        visible = isNetworkAvailable == false,
+        enter = expandIn(),
+        exit = shrinkOut(),
+    ) {
+        Box(
+            modifier = modifier.background(color = MaterialTheme.colorScheme.error),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "Нет связи с интернетом, данные могут быть неактуальным!",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onError,
             )
         }
     }
@@ -248,6 +302,7 @@ private fun TaskDetailsScreenPreview() {
             isTaskCreatingInProgress = false,
             isTaskModifyInProgress = false,
             error = null,
+            isNetworkAvailable = false,
             onBackClicked = {},
             onCreateTaskClicked = {},
             onUpdateTaskClicked = {},
