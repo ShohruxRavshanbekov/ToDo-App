@@ -26,5 +26,7 @@ rootProject.name = "TodoApp"
 include(":app")
 include(":core")
 include(":navigation")
-
+include(":data")
+include(":network")
+include(":local")
 include(":features:tasks")

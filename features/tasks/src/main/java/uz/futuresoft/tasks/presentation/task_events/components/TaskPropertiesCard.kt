@@ -13,18 +13,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
+import uz.futuresoft.tasks.utils.TodoItemImportance
 
 @Composable
 fun TaskPropertiesCard(
-    importance: TodoItemImportance,
+    importance: String,
     showCalendar: Boolean,
+    modifier: Modifier,
     initialSelectedDateMillis: Long? = null,
-    onImportanceChange: (TodoItemImportance) -> Unit,
+    onImportanceChange: (String) -> Unit,
     onDateSelected: (Long?) -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
     ) {
@@ -51,7 +52,8 @@ fun TaskPropertiesCard(
 private fun TaskPropertiesCardPreview() {
     TodoAppTheme {
         TaskPropertiesCard(
-            importance = TodoItemImportance.NORMAL,
+            modifier = Modifier,
+            importance = TodoItemImportance.NORMAL.value,
             showCalendar = false,
             onImportanceChange = {},
             onDateSelected = {},

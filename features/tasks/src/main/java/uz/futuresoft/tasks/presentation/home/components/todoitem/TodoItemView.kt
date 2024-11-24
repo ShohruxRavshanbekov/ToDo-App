@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Info
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.data.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Calendar
 
 @Composable
@@ -87,9 +87,10 @@ private fun TodoItemPreview() {
             task = ToDoItem(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
-                importance = TodoItemImportance.NORMAL,
+                importance = TodoItemImportance.LOW.value,
                 isCompleted = false,
-                createdAt = Calendar.getInstance().time
+                createdAt = Calendar.getInstance().timeInMillis,
+                modifiedAt = Calendar.getInstance().timeInMillis,
             ),
             onInfoClick = {}
         )

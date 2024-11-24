@@ -1,7 +1,13 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package uz.futuresoft.tasks.presentation.task_events
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,9 +20,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,20 +35,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import uz.futuresoft.core.ui.components.AppAlertDialog
+import uz.futuresoft.core.ui.components.LoadingDialog
+import uz.futuresoft.core.ui.components.NetworkStateIndicator
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
-import uz.futuresoft.tasks.domain.repository.TodoItemsRepository
-import uz.futuresoft.tasks.presentation.home.HomeViewModel
+import uz.futuresoft.data.models.ToDoItem
+import uz.futuresoft.data.repositories.TodoItemsRepository
 import uz.futuresoft.tasks.presentation.task_events.components.TaskDetailsScreenTopBar
 import uz.futuresoft.tasks.presentation.task_events.components.TaskPropertiesCard
 import uz.futuresoft.tasks.presentation.task_events.components.TextInputCard
-import uz.futuresoft.tasks.utils.convertMillisToDate
+import uz.futuresoft.tasks.utils.NetworkChangeHandler
+import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Calendar
 import java.util.UUID
 
@@ -48,65 +63,57 @@ fun TaskDetailsScreen(
     navHostController: NavHostController,
     todoItemsRepository: TodoItemsRepository,
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
     val viewModel by remember { mutableStateOf(TaskDetailsViewModel(todoItemsRepository = todoItemsRepository)) }
-    if (taskId != null) {
-        viewModel.getTaskById(id = taskId)
+    val task by viewModel.task.collectAsState()
+    val isTaskLoading by viewModel.isTaskLoading.collectAsState()
+    val isTaskCreatingInProgress by viewModel.isTaskCreatingInProgress.collectAsState()
+    val isTaskModifyInProgress by viewModel.isTaskModifyInProgress.collectAsState()
+    val error by viewModel.error.collectAsState()
+    var isNetworkAvailable: Boolean? by remember { mutableStateOf(null) }
+
+    LaunchedEffect(key1 = Unit) {
+        if (taskId != null) {
+            viewModel.getTaskById(id = taskId)
+        }
     }
 
-    val task by viewModel.task.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    var taskText by remember { mutableStateOf(task.text) }
-    var importance by remember { mutableStateOf(task.importance) }
-    var deadline by remember { mutableStateOf(task.deadline?.time) }
-    val initialSelectedDateMillis by remember { mutableStateOf(task.deadline?.time) }
-    val showCalendar by remember { mutableStateOf(deadline != null) }
+    NetworkChangeHandler(
+        lifecycleOwner = lifecycleOwner,
+        onNetworkAvailable = {
+            isNetworkAvailable = true
+            scope.launch {
+                if (taskId != null) {
+                    viewModel.getTaskById(id = taskId)
+                }
+            }
+        },
+        onNetworkUnavailable = {
+            isNetworkAvailable = false
+        }
+    )
 
     TaskDetailsScreenContent(
         taskId = taskId,
-        taskText = taskText,
-        importance = importance,
-        showCalendar = showCalendar,
-        loading = loading,
-        onTaskTextChanged = { taskText = it },
+        task = task,
+        isTaskLoading = isTaskLoading,
+        isTaskCreatingInProgress = isTaskCreatingInProgress,
+        isTaskModifyInProgress = isTaskModifyInProgress,
+        error = error,
+        isNetworkAvailable = isNetworkAvailable,
         onBackClicked = { navHostController.popBackStack() },
-        onImportanceChanged = { importance = it },
-        onDateSelected = { deadline = it },
-        onSaveClicked = {
-            if (taskId == null) {
-                viewModel.addTask(
-                    task = ToDoItem(
-                        id = UUID.randomUUID().toString(),
-                        text = taskText,
-                        importance = importance,
-                        deadline = deadline?.convertMillisToDate(),
-                        isCompleted = false,
-                        createdAt = Calendar.getInstance().time,
-                    )
-                )
-            } else {
-                viewModel.editTask(
-                    id = task.id,
-                    task = ToDoItem(
-                        id = task.id,
-                        text = taskText,
-                        importance = importance,
-                        deadline = deadline?.convertMillisToDate(),
-                        isCompleted = task.isCompleted,
-                        createdAt = task.createdAt,
-                        modifiedAt = Calendar.getInstance().time,
-                    )
-                )
-            }
-            navHostController.popBackStack()
-        },
         onDeleteTask = {
+            viewModel.removeTask(taskId = task.id)
             navHostController.popBackStack()
-            viewModel.removeTask(id = task.id)
         },
-        initialSelectedDateMillis = if (initialSelectedDateMillis != 0L) {
-            initialSelectedDateMillis
-        } else {
-            null
+        onCreateTaskClicked = {
+            viewModel.createTask(task = it)
+            navHostController.popBackStack()
+        },
+        onUpdateTaskClicked = {
+            viewModel.updateTask(taskId = task.id, task = it)
+            navHostController.popBackStack()
         },
     )
 }
@@ -114,19 +121,37 @@ fun TaskDetailsScreen(
 @Composable
 private fun TaskDetailsScreenContent(
     taskId: String?,
-    taskText: String,
-    importance: TodoItemImportance,
-    showCalendar: Boolean,
-    loading: Boolean,
-    initialSelectedDateMillis: Long? = null,
-    onTaskTextChanged: (String) -> Unit,
+    task: ToDoItem,
+    isTaskLoading: Boolean,
+    isTaskCreatingInProgress: Boolean,
+    isTaskModifyInProgress: Boolean,
+    error: Throwable?,
+    isNetworkAvailable: Boolean?,
     onBackClicked: () -> Unit,
-    onImportanceChanged: (TodoItemImportance) -> Unit,
-    onDateSelected: (Long?) -> Unit,
-    onSaveClicked: () -> Unit,
     onDeleteTask: () -> Unit,
+    onCreateTaskClicked: (ToDoItem) -> Unit,
+    onUpdateTaskClicked: (ToDoItem) -> Unit,
 ) {
+    val snackBarHostState = remember { SnackbarHostState() }
     var showAlertDialog by remember { mutableStateOf(false) }
+    var taskText by remember { mutableStateOf("") }
+    var importance by remember { mutableStateOf(TodoItemImportance.NORMAL.value) }
+    var deadline: Long? by remember { mutableStateOf(null) }
+    var initialSelectedDateMillis: Long? by remember { mutableStateOf(deadline) }
+    val showCalendar by remember { mutableStateOf(deadline != null) }
+
+    LaunchedEffect(key1 = task) {
+        taskText = task.text
+        importance = task.importance
+        deadline = task.deadline
+        initialSelectedDateMillis = task.deadline
+    }
+
+    LaunchedEffect(key1 = error) {
+        if (error != null) {
+            snackBarHostState.showSnackbar(message = "Что-то пошло не так. Пожалуйста, попробуйте заново.")
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -136,57 +161,79 @@ private fun TaskDetailsScreenContent(
             TaskDetailsScreenTopBar(
                 taskText = taskText,
                 onBackClicked = onBackClicked,
-                onSaveClicked = onSaveClicked
+                onSaveClicked = {
+                    if (taskId == null) {
+                        onCreateTaskClicked(
+                            ToDoItem(
+                                id = UUID.randomUUID().toString(),
+                                text = taskText,
+                                importance = importance.ifEmpty { TodoItemImportance.NORMAL.value },
+                                deadline = deadline,
+                                isCompleted = false,
+                                createdAt = Calendar.getInstance().timeInMillis,
+                                modifiedAt = Calendar.getInstance().timeInMillis,
+                            )
+                        )
+                    } else {
+                        onUpdateTaskClicked(
+                            ToDoItem(
+                                id = task.id,
+                                text = taskText,
+                                importance = importance,
+                                deadline = deadline,
+                                isCompleted = task.isCompleted,
+                                createdAt = task.createdAt,
+                                modifiedAt = Calendar.getInstance().timeInMillis,
+                            )
+                        )
+                    }
+                }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(vertical = 16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            NetworkStateIndicator(
+                isNetworkAvailable = isNetworkAvailable,
+                modifier = Modifier.fillMaxWidth()
+            )
             TextInputCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 taskText = taskText,
-                onValueChanged = onTaskTextChanged,
+                onValueChanged = { taskText = it },
             )
             TaskPropertiesCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 importance = importance,
                 showCalendar = showCalendar,
                 initialSelectedDateMillis = initialSelectedDateMillis,
-                onImportanceChange = onImportanceChanged,
-                onDateSelected = onDateSelected
+                onImportanceChange = { importance = it },
+                onDateSelected = { deadline = it },
             )
 
             if (taskId != null) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.error,
-                        disabledContainerColor = MaterialTheme.colorScheme.surface,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    onClick = { showAlertDialog = true },
-                ) {
-                    if (loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.secondary,
-                            trackColor = MaterialTheme.colorScheme.outline,
-                        )
-                    } else {
-                        Text(
-                            text = "Удалить",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
+                DeleteTaskButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    onClick = { showAlertDialog = true }
+                )
             }
+        }
+
+        if (isTaskLoading || isTaskCreatingInProgress || isTaskModifyInProgress) {
+            LoadingDialog()
         }
 
         if (showAlertDialog) {
@@ -206,21 +253,52 @@ private fun TaskDetailsScreenContent(
     }
 }
 
+@Composable
+private fun DeleteTaskButton(
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    Button(
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.error,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        shape = RoundedCornerShape(16.dp),
+        contentPadding = PaddingValues(16.dp),
+        onClick = onClick,
+    ) {
+        Text(
+            text = "Удалить",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun TaskDetailsScreenPreview() {
     TodoAppTheme {
         TaskDetailsScreenContent(
             taskId = "",
-            taskText = "",
-            importance = TodoItemImportance.NORMAL,
-            showCalendar = false,
-            loading = false,
-            onTaskTextChanged = {},
+            task = ToDoItem(
+                id = "",
+                text = "",
+                importance = "",
+                isCompleted = false,
+                createdAt = 0L,
+                modifiedAt = 0L
+            ),
+            isTaskLoading = false,
+            isTaskCreatingInProgress = false,
+            isTaskModifyInProgress = false,
+            error = null,
+            isNetworkAvailable = false,
             onBackClicked = {},
-            onSaveClicked = {},
-            onImportanceChanged = {},
-            onDateSelected = {},
+            onCreateTaskClicked = {},
+            onUpdateTaskClicked = {},
             onDeleteTask = {},
         )
     }

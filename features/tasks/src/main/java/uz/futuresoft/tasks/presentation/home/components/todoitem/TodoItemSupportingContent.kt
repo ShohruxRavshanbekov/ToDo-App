@@ -15,9 +15,10 @@ import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Calendar
 import uz.futuresoft.core.ui.theme.TodoAppTheme
 import uz.futuresoft.core.utils.formatTo
-import uz.futuresoft.tasks.common.models.TodoItemImportance
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.data.models.ToDoItem
+import uz.futuresoft.tasks.utils.TodoItemImportance
 import java.util.Calendar
+import java.util.Date
 
 @Composable
 fun TodoItemSupportingContent(
@@ -34,7 +35,7 @@ fun TodoItemSupportingContent(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = task.deadline.formatTo(pattern = "dd MMM"),
+                text = Date(task.deadline!!).formatTo(pattern = "dd MMM"),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -51,9 +52,10 @@ private fun TodoItemSupportingContentPreview() {
             task = ToDoItem(
                 id = "t0",
                 text = "Посещать лекцию Яндекса :)",
-                importance = TodoItemImportance.NORMAL,
+                importance = TodoItemImportance.NORMAL.value,
                 isCompleted = false,
-                createdAt = Calendar.getInstance().time
+                createdAt = Calendar.getInstance().timeInMillis,
+                modifiedAt = Calendar.getInstance().timeInMillis,
             )
         )
     }

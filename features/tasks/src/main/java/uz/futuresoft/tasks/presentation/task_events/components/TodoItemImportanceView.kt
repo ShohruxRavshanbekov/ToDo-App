@@ -35,22 +35,22 @@ import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.PriorityHigh
 import uz.futuresoft.core.ui.icons.PriorityLow
 import uz.futuresoft.core.ui.theme.TodoAppTheme
-import uz.futuresoft.tasks.common.models.TodoItemImportance
+import uz.futuresoft.tasks.utils.TodoItemImportance
 
 @Composable
 fun TodoItemImportanceView(
-    importance: TodoItemImportance,
-    onImportanceChange: (TodoItemImportance) -> Unit,
+    importance: String,
+    onImportanceChange: (String) -> Unit,
 ) {
     val importanceItemHeight = 32.dp
     val importanceItemWidth = 48.dp
 
-    var taskImportance by remember { mutableStateOf(importance) }
     val offsetX = animateDpAsState(
-        targetValue = when (taskImportance) {
-            TodoItemImportance.LOW -> -importanceItemWidth
-            TodoItemImportance.NORMAL -> 0.dp
-            TodoItemImportance.HIGH -> importanceItemWidth
+        targetValue = when (importance) {
+            TodoItemImportance.LOW.value -> -importanceItemWidth
+            TodoItemImportance.NORMAL.value -> 0.dp
+            TodoItemImportance.HIGH.value -> importanceItemWidth
+            else -> 0.dp
         },
         animationSpec = tween(durationMillis = 300),
         label = "offset"
@@ -78,8 +78,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.LOW
-                        onImportanceChange(taskImportance)
+                        onImportanceChange(TodoItemImportance.LOW.value)
                     }
                 ) {
                     Icon(
@@ -99,8 +98,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.NORMAL
-                        onImportanceChange(taskImportance)
+                        onImportanceChange(TodoItemImportance.NORMAL.value)
                     },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -122,8 +120,7 @@ fun TodoItemImportanceView(
                         width = importanceItemWidth
                     ),
                     onClick = {
-                        taskImportance = TodoItemImportance.HIGH
-                        onImportanceChange(taskImportance)
+                        onImportanceChange(TodoItemImportance.HIGH.value)
                     }
                 ) {
                     Icon(
@@ -142,7 +139,7 @@ fun TodoItemImportanceView(
 private fun ToDoItemImportanceViewPreview() {
     TodoAppTheme {
         TodoItemImportanceView(
-            importance = TodoItemImportance.NORMAL,
+            importance = TodoItemImportance.NORMAL.value,
             onImportanceChange = {},
         )
     }

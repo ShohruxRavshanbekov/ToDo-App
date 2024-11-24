@@ -7,7 +7,8 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import uz.futuresoft.tasks.domain.models.ToDoItem
+import uz.futuresoft.data.models.ToDoItem
+import java.util.Calendar
 
 @Composable
 fun SwipeTodoItemContainer(
@@ -22,7 +23,12 @@ fun SwipeTodoItemContainer(
     LaunchedEffect(key1 = dismissState.currentValue) {
         when (dismissState.currentValue) {
             SwipeToDismissBoxValue.StartToEnd -> {
-                onMarkAsCompleted(item)
+                onMarkAsCompleted(
+                    item.copy(
+                        isCompleted = true,
+                        modifiedAt = Calendar.getInstance().timeInMillis
+                    )
+                )
                 dismissState.snapTo(SwipeToDismissBoxValue.Settled)
             }
 
