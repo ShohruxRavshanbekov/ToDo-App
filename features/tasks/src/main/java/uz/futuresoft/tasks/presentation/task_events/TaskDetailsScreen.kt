@@ -2,6 +2,7 @@
 
 package uz.futuresoft.tasks.presentation.task_events
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkOut
@@ -30,6 +31,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +57,8 @@ import uz.futuresoft.tasks.presentation.task_events.components.TaskPropertiesCar
 import uz.futuresoft.tasks.presentation.task_events.components.TextInputCard
 import uz.futuresoft.tasks.utils.NetworkChangeHandler
 import uz.futuresoft.tasks.utils.TodoItemImportance
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.Calendar
 import java.util.UUID
 
@@ -66,11 +71,10 @@ fun TaskDetailsScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val viewModel by remember { mutableStateOf(TaskDetailsViewModel(todoItemsRepository = todoItemsRepository)) }
-    val task by viewModel.task.collectAsState()
-    val isTaskLoading by viewModel.isTaskLoading.collectAsState()
-    val isTaskCreatingInProgress by viewModel.isTaskCreatingInProgress.collectAsState()
-    val isTaskModifyInProgress by viewModel.isTaskModifyInProgress.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val loading by remember { derivedStateOf { uiState.loading } }
+    val error by remember { derivedStateOf { uiState.error } }
+    val task by remember { derivedStateOf { uiState.task } }
     var isNetworkAvailable: Boolean? by remember { mutableStateOf(null) }
 
     LaunchedEffect(key1 = Unit) {
@@ -83,11 +87,6 @@ fun TaskDetailsScreen(
         lifecycleOwner = lifecycleOwner,
         onNetworkAvailable = {
             isNetworkAvailable = true
-            scope.launch {
-                if (taskId != null) {
-                    viewModel.getTaskById(id = taskId)
-                }
-            }
         },
         onNetworkUnavailable = {
             isNetworkAvailable = false
@@ -97,9 +96,7 @@ fun TaskDetailsScreen(
     TaskDetailsScreenContent(
         taskId = taskId,
         task = task,
-        isTaskLoading = isTaskLoading,
-        isTaskCreatingInProgress = isTaskCreatingInProgress,
-        isTaskModifyInProgress = isTaskModifyInProgress,
+        loading = loading,
         error = error,
         isNetworkAvailable = isNetworkAvailable,
         onBackClicked = { navHostController.popBackStack() },
@@ -122,9 +119,7 @@ fun TaskDetailsScreen(
 private fun TaskDetailsScreenContent(
     taskId: String?,
     task: ToDoItem,
-    isTaskLoading: Boolean,
-    isTaskCreatingInProgress: Boolean,
-    isTaskModifyInProgress: Boolean,
+    loading: Boolean,
     error: Throwable?,
     isNetworkAvailable: Boolean?,
     onBackClicked: () -> Unit,
@@ -132,24 +127,40 @@ private fun TaskDetailsScreenContent(
     onCreateTaskClicked: (ToDoItem) -> Unit,
     onUpdateTaskClicked: (ToDoItem) -> Unit,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     val snackBarHostState = remember { SnackbarHostState() }
     var showAlertDialog by remember { mutableStateOf(false) }
     var taskText by remember { mutableStateOf("") }
     var importance by remember { mutableStateOf(TodoItemImportance.NORMAL.value) }
     var deadline: Long? by remember { mutableStateOf(null) }
     var initialSelectedDateMillis: Long? by remember { mutableStateOf(deadline) }
-    val showCalendar by remember { mutableStateOf(deadline != null) }
+    var showCalendar by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = task) {
         taskText = task.text
         importance = task.importance
         deadline = task.deadline
         initialSelectedDateMillis = task.deadline
+        showCalendar = task.deadline != null
+        Log.d("AAAAA", "TaskDetailsScreenContent: $task")
+        Log.d("AAAAA", "TaskDetailsScreenContent: showCalendar=$showCalendar")
     }
 
-    LaunchedEffect(key1 = error) {
-        if (error != null) {
-            snackBarHostState.showSnackbar(message = "Что-то пошло не так. Пожалуйста, попробуйте заново.")
+    LaunchedEffect(key1 = Unit) {
+        if (isNetworkAvailable != false && error != null) {
+            when (error) {
+                is SocketTimeoutException -> {
+                    snackBarHostState.showSnackbar(message = "Операция не выполнена! Отсутствует соединение с интернетом")
+                }
+
+                is UnknownHostException -> {
+                    snackBarHostState.showSnackbar(message = "Не удалось соедениться с сервером! Пожалуйста, попробуйте позже")
+                }
+
+                else -> {
+                    snackBarHostState.showSnackbar(message = "Что-то пошло не так. Пожалуйста, попробуйте заново")
+                }
+            }
         }
     }
 
@@ -160,6 +171,7 @@ private fun TaskDetailsScreenContent(
         topBar = {
             TaskDetailsScreenTopBar(
                 taskText = taskText,
+                isNetworkAvailable = isNetworkAvailable,
                 onBackClicked = onBackClicked,
                 onSaveClicked = {
                     if (taskId == null) {
@@ -200,10 +212,6 @@ private fun TaskDetailsScreenContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            NetworkStateIndicator(
-                isNetworkAvailable = isNetworkAvailable,
-                modifier = Modifier.fillMaxWidth()
-            )
             TextInputCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -215,10 +223,14 @@ private fun TaskDetailsScreenContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
+                keyboardController = keyboardController,
                 importance = importance,
                 showCalendar = showCalendar,
                 initialSelectedDateMillis = initialSelectedDateMillis,
-                onImportanceChange = { importance = it },
+                onImportanceChange = {
+                    importance = it
+                    keyboardController?.hide()
+                },
                 onDateSelected = { deadline = it },
             )
 
@@ -232,7 +244,7 @@ private fun TaskDetailsScreenContent(
             }
         }
 
-        if (isTaskLoading || isTaskCreatingInProgress || isTaskModifyInProgress) {
+        if (loading) {
             LoadingDialog()
         }
 
@@ -291,9 +303,7 @@ private fun TaskDetailsScreenPreview() {
                 createdAt = 0L,
                 modifiedAt = 0L
             ),
-            isTaskLoading = false,
-            isTaskCreatingInProgress = false,
-            isTaskModifyInProgress = false,
+            loading = false,
             error = null,
             isNetworkAvailable = false,
             onBackClicked = {},

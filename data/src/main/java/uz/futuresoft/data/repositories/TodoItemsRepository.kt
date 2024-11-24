@@ -11,7 +11,6 @@ import uz.futuresoft.data.toToDoItem
 import uz.futuresoft.data.toTodoDTO
 import uz.futuresoft.data.toTodoEntity
 import uz.futuresoft.data.toTodoItem
-import uz.futuresoft.local.LocalDatabase
 import uz.futuresoft.local.localDatabase
 import uz.futuresoft.network.ApiService
 import uz.futuresoft.network.models.request.SaveTaskRequest
@@ -30,14 +29,18 @@ class TodoItemsRepository(private val context: Context) {
     val tasks: StateFlow<List<ToDoItem>>
         get() = _tasks.asStateFlow()
 
-    private val _taskModificationResponse = MutableStateFlow(false)
-    val taskModificationResponse: StateFlow<Boolean>
-        get() = _taskModificationResponse.asStateFlow()
+    suspend fun getTodosFromLocalDatabase() {
+        getTodos()
+        val result = runCatching { localDatabase.todoDao.getAllTodos() }
+        result
+            .onSuccess {
+                _tasks.value = emptyList()
+                _tasks.value = it.map { todoEntity -> todoEntity.toTodoItem() }
+            }
+            .onFailure { _error.value = it }
+    }
 
-    suspend fun getTodos() {
-        val todoDao = localDatabase.todoDao
-        _tasks.value = emptyList()
-        _tasks.value = todoDao.getAllTodos().map { todoEntity -> todoEntity.toTodoItem() }
+    private suspend fun getTodos() {
         val result = runCatching {
             val response = todosApi.getTodos()
             AppSharedPreferences.write(
@@ -47,15 +50,16 @@ class TodoItemsRepository(private val context: Context) {
             response.list.map { it.toToDoItem() }
         }
         result
-            .onSuccess {
-                todoDao.insertTodos(todos = it.map { todoItem -> todoItem.toTodoEntity() })
+            .onSuccess { todosFromServer ->
+                localDatabase.todoDao.insertTodos(todos = todosFromServer.map { todoItem -> todoItem.toTodoEntity() })
+                _tasks.update { todosFromServer }
             }
             .onFailure { _error.value = it }
     }
 
-    suspend fun syncWithServer(revision: Int, tasks: List<ToDoItem>) {
-        val tasksToSync = SyncWithServerRequest(list = tasks.map { it.toTodoDTO() })
+    private suspend fun syncWithServer(revision: Int, tasks: List<ToDoItem>) {
         val result = runCatching {
+            val tasksToSync = SyncWithServerRequest(list = tasks.map { it.toTodoDTO() })
             val response = todosApi.syncWithServer(
                 revision = revision,
                 tasks = tasksToSync
@@ -67,7 +71,7 @@ class TodoItemsRepository(private val context: Context) {
             response.list.map { it.toToDoItem() }
         }
         result
-            .onSuccess { _tasks.update { it } }
+            .onSuccess { localDatabase.todoDao.insertTodos(todos = it.map { todoItem -> todoItem.toTodoEntity() }) }
             .onFailure { _error.value = it }
     }
 
@@ -91,7 +95,6 @@ class TodoItemsRepository(private val context: Context) {
         result
             .onSuccess { createdTask ->
                 _tasks.update { currentTasks -> currentTasks.plus(createdTask) }
-                _taskModificationResponse.value = true
             }
             .onFailure { _error.value = it }
     }
@@ -121,7 +124,6 @@ class TodoItemsRepository(private val context: Context) {
                         }
                     }
                 }
-                _taskModificationResponse.value = true
             }
             .onFailure { _error.value = it }
     }
@@ -141,7 +143,6 @@ class TodoItemsRepository(private val context: Context) {
         result
             .onSuccess { deletedTask ->
                 _tasks.update { currentTasks -> currentTasks.minus(deletedTask) }
-                _taskModificationResponse.value = true
             }
             .onFailure { _error.value = it }
     }

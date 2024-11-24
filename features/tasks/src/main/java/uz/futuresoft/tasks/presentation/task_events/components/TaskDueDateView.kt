@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.theme.TodoAppTheme
@@ -31,6 +32,7 @@ import uz.futuresoft.tasks.utils.formatDateMillisTo
 @Composable
 fun TaskDueDateView(
     showCalendar: Boolean,
+    keyboardController: SoftwareKeyboardController? = null,
     initialSelectedDateMillis: Long? = null,
     onDateSelected: (Long?) -> Unit,
 ) {
@@ -72,7 +74,10 @@ fun TaskDueDateView(
             }
             Switch(
                 checked = isChecked,
-                onCheckedChange = { isChecked = it },
+                onCheckedChange = {
+                    isChecked = it
+                    keyboardController?.hide()
+                },
             )
         }
         AnimatedContent(
@@ -110,6 +115,6 @@ fun TaskDueDateView(
 @Composable
 private fun TaskDueDateViewPreview() {
     TodoAppTheme {
-        TaskDueDateView(showCalendar = false, onDateSelected = {})
+        TaskDueDateView(showCalendar = true, onDateSelected = {})
     }
 }

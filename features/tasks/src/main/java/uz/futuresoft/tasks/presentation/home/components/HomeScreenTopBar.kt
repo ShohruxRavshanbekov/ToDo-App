@@ -4,6 +4,7 @@ package uz.futuresoft.tasks.presentation.home.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import uz.futuresoft.core.ui.components.NetworkStateIndicator
 import uz.futuresoft.core.ui.components.VerticalSpacer
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Eye
@@ -35,6 +37,7 @@ import uz.futuresoft.core.ui.theme.TodoAppTheme
 fun HomeScreenTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     darkTheme: Boolean,
+    isNetworkAvailable: Boolean?,
     showCompletedTasksDetailsBar: Boolean,
     completedTasksCount: Int,
     onChangeTheme: () -> Unit,
@@ -43,58 +46,64 @@ fun HomeScreenTopBar(
 ) {
     var appDarkTheme by remember { mutableStateOf(darkTheme) }
 
-    MediumTopAppBar(
-        scrollBehavior = scrollBehavior,
-        expandedHeight = if (showCompletedTasksDetailsBar) 150.dp else 112.dp,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.background,
-        ),
-        title = {
-            TitleContent(
-                scrollBehavior = scrollBehavior,
-                showCompletedTasksDetailsBar = showCompletedTasksDetailsBar,
-                completedTasksCount = completedTasksCount,
-                showCompletedTasks = showCompletedTasks,
-                onShowCompletedTasksClick = onShowCompletedTasksClick
-            )
-        },
-        actions = {
-            if (showCompletedTasksDetailsBar && scrollBehavior.state.collapsedFraction == 1.0f) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        NetworkStateIndicator(
+            isNetworkAvailable = isNetworkAvailable,
+            modifier = Modifier.fillMaxWidth()
+        )
+        MediumTopAppBar(
+            scrollBehavior = scrollBehavior,
+            expandedHeight = if (showCompletedTasksDetailsBar) 150.dp else 112.dp,
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.background,
+                scrolledContainerColor = MaterialTheme.colorScheme.background,
+            ),
+            title = {
+                TitleContent(
+                    scrollBehavior = scrollBehavior,
+                    showCompletedTasksDetailsBar = showCompletedTasksDetailsBar,
+                    completedTasksCount = completedTasksCount,
+                    showCompletedTasks = showCompletedTasks,
+                    onShowCompletedTasksClick = onShowCompletedTasksClick
+                )
+            },
+            actions = {
+                if (showCompletedTasksDetailsBar && scrollBehavior.state.collapsedFraction == 1.0f) {
+                    IconButton(
+                        onClick = onShowCompletedTasksClick,
+                        enabled = completedTasksCount > 0,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.secondary,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (showCompletedTasks) AppIcons.EyeSlash else AppIcons.Eye,
+                            contentDescription = null,
+                        )
+                    }
+                }
                 IconButton(
-                    onClick = onShowCompletedTasksClick,
-                    enabled = completedTasksCount > 0,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = MaterialTheme.colorScheme.secondary,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    onClick = {
+                        onChangeTheme()
+                        appDarkTheme = !appDarkTheme
+                    }
                 ) {
-                    Icon(
-                        imageVector = if (showCompletedTasks) AppIcons.EyeSlash else AppIcons.Eye,
-                        contentDescription = null,
-                    )
+                    AnimatedContent(
+                        targetState = appDarkTheme,
+                        label = "theme icon"
+                    ) { darkTheme ->
+                        Icon(
+                            modifier = Modifier.size(20.dp),
+                            imageVector = if (darkTheme) AppIcons.Sun else AppIcons.Moon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.surfaceTint,
+                        )
+                    }
                 }
-            }
-            IconButton(
-                onClick = {
-                    onChangeTheme()
-                    appDarkTheme = !appDarkTheme
-                }
-            ) {
-                AnimatedContent(
-                    targetState = appDarkTheme,
-                    label = "theme icon"
-                ) { darkTheme ->
-                    Icon(
-                        modifier = Modifier.size(20.dp),
-                        imageVector = if (darkTheme) AppIcons.Sun else AppIcons.Moon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.surfaceTint,
-                    )
-                }
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 @Composable
@@ -134,6 +143,7 @@ private fun HomeScreenTopBarPreview() {
                 rememberTopAppBarState()
             ),
             darkTheme = false,
+            isNetworkAvailable = false,
             showCompletedTasksDetailsBar = true,
             completedTasksCount = 0,
             onChangeTheme = {},
