@@ -41,26 +41,29 @@ fun TaskList(
     onMarkItemAsCompleted: (ToDoItem) -> Unit = {},
     onDeleteItem: (ToDoItem) -> Unit = {},
 ) {
-    val modifier = if (tasks.isNotEmpty()) {
-        Modifier
-            .background(color = Color.Transparent)
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
-            .clip(shape = RoundedCornerShape(16.dp))
-    } else {
-        Modifier.fillMaxSize()
-    }
+    val modifier =
+        if (tasks.isNotEmpty()) {
+            Modifier
+                .background(color = Color.Transparent)
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
+                .clip(shape = RoundedCornerShape(16.dp))
+        } else {
+            Modifier.fillMaxSize()
+        }
 
-    val horizontalAlignment = if (tasks.isNotEmpty()) {
-        Alignment.Start
-    } else {
-        Alignment.CenterHorizontally
-    }
+    val horizontalAlignment =
+        if (tasks.isNotEmpty()) {
+            Alignment.Start
+        } else {
+            Alignment.CenterHorizontally
+        }
 
-    val verticalArrangement = if (tasks.isNotEmpty()) {
-        Arrangement.Top
-    } else {
-        Arrangement.Center
-    }
+    val verticalArrangement =
+        if (tasks.isNotEmpty()) {
+            Arrangement.Top
+        } else {
+            Arrangement.Center
+        }
 
     LazyColumn(
         state = state,
@@ -68,12 +71,6 @@ fun TaskList(
         horizontalAlignment = horizontalAlignment,
         verticalArrangement = verticalArrangement,
     ) {
-        if (tasks.isEmpty()){
-            item {
-                NoDataFoundContent()
-            }
-        }
-
         items(items = tasks, key = { it.id }) { task ->
             SwipeTodoItemContainer(
                 modifier = Modifier.animateItem(),
@@ -87,13 +84,14 @@ fun TaskList(
                 )
             }
         }
-
-        if (tasks.isNotEmpty()) {
-            item {
+        item {
+            if (tasks.isNotEmpty()) {
                 AddNewTaskItem(
                     modifier = Modifier.animateItem(),
                     onAddNewTaskClick = onAddNewTaskClick
                 )
+            } else {
+                NoDataFoundContent()
             }
         }
     }

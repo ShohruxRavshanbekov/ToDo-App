@@ -6,9 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,7 +21,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,12 +33,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
-import uz.futuresoft.core.ui.components.NetworkStateIndicator
 import uz.futuresoft.core.ui.icons.AppIcons
 import uz.futuresoft.core.ui.icons.Plus
 import uz.futuresoft.core.ui.theme.TodoAppTheme
@@ -51,6 +49,8 @@ import uz.futuresoft.tasks.presentation.home.components.HomeScreenTopBar
 import uz.futuresoft.tasks.presentation.home.components.TaskList
 import uz.futuresoft.tasks.utils.NetworkChangeHandler
 import uz.futuresoft.tasks.utils.TodoItemImportance
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.Calendar
 import java.util.UUID
 
@@ -64,10 +64,11 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val viewModel by remember { mutableStateOf(HomeViewModel(todoItemsRepository = todoItemsRepository)) }
-    val isTasksLoading by viewModel.isTasksLoading.collectAsState()
-    val isTaskModifyInProgress by viewModel.isTaskModifyInProgress.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val tasks by viewModel.tasks.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val loading by remember { derivedStateOf { uiState.loading } }
+    val error by remember { derivedStateOf { uiState.error } }
+    val tasks by remember { derivedStateOf { uiState.tasks } }
+    val snackBarHostState = remember { SnackbarHostState() }
     var isNetworkAvailable: Boolean? by remember { mutableStateOf(null) }
 
     LaunchedEffect(key1 = Unit) {
@@ -78,11 +79,6 @@ fun HomeScreen(
         lifecycleOwner = lifecycleOwner,
         onNetworkAvailable = {
             isNetworkAvailable = true
-            if (tasks.isEmpty()) {
-                scope.launch {
-                    viewModel.getTasks()
-                }
-            }
         },
         onNetworkUnavailable = {
             isNetworkAvailable = false
@@ -94,18 +90,16 @@ fun HomeScreen(
         darkTheme = darkTheme,
         error = error,
         isNetworkAvailable = isNetworkAvailable,
-        isTasksLoading = isTasksLoading,
-        isTaskModifyInProgress = isTaskModifyInProgress,
+        loading = loading,
+        snackBarHostState = snackBarHostState,
         onAddNewTaskClicked = { navHostController.navigate(Routes.TaskDetails(taskId = null)) },
         onEditTaskClick = { navHostController.navigate(Routes.TaskDetails(taskId = it)) },
         onChangeTheme = onChangeTheme,
         onMarkItemAsCompleted = { viewModel.markAsCompleted(taskId = it.id, task = it) },
         onDeleteItem = { viewModel.removeTask(taskId = it.id) },
         onRefresh = {
-            if (isNetworkAvailable == true) {
-                scope.launch {
-                    viewModel.getTasks()
-                }
+            scope.launch {
+                viewModel.getTasks()
             }
         },
     )
@@ -117,8 +111,8 @@ private fun HomeScreenContent(
     darkTheme: Boolean,
     error: Throwable?,
     isNetworkAvailable: Boolean?,
-    isTasksLoading: Boolean,
-    isTaskModifyInProgress: Boolean,
+    loading: Boolean,
+    snackBarHostState: SnackbarHostState,
     onRefresh: () -> Unit,
     onAddNewTaskClicked: () -> Unit,
     onEditTaskClick: (String) -> Unit,
@@ -126,17 +120,29 @@ private fun HomeScreenContent(
     onDeleteItem: (ToDoItem) -> Unit,
     onChangeTheme: () -> Unit,
 ) {
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val context = LocalContext.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val pullToRefreshState = rememberPullToRefreshState()
     val lazyListState = rememberLazyListState()
     val lazyListFirstVisibleItemScrollOffset by
     remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
-    val snackBarHostState = remember { SnackbarHostState() }
     var showCompletedTasks by remember { mutableStateOf(false) }
 
-    LaunchedEffect(key1 = error) {
-        if (error != null) {
-            snackBarHostState.showSnackbar(message = "Что-то пошло не так. Пожалуйста, попробуйте заново.")
+    LaunchedEffect(key1 = Unit) {
+        if (isNetworkAvailable != false && error != null) {
+            when (error) {
+                is SocketTimeoutException -> {
+                    snackBarHostState.showSnackbar(message = "Операция не выполнена! Отсутствует соединение с интернетом")
+                }
+
+                is UnknownHostException -> {
+                    snackBarHostState.showSnackbar(message = "Не удалось соедениться с сервером! Пожалуйста, попробуйте позже")
+                }
+
+                else -> {
+                    snackBarHostState.showSnackbar(message = "Что-то пошло не так. Пожалуйста, попробуйте заново")
+                }
+            }
         }
     }
 
@@ -149,6 +155,7 @@ private fun HomeScreenContent(
             HomeScreenTopBar(
                 scrollBehavior = scrollBehavior,
                 darkTheme = darkTheme,
+                isNetworkAvailable = isNetworkAvailable,
                 showCompletedTasksDetailsBar = tasks.isNotEmpty(),
                 completedTasksCount = tasks.filter { it.isCompleted }.size,
                 onChangeTheme = onChangeTheme,
@@ -156,6 +163,7 @@ private fun HomeScreenContent(
                 onShowCompletedTasksClick = { showCompletedTasks = !showCompletedTasks },
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         floatingActionButton = {
             AnimatedVisibility(
                 visible = lazyListFirstVisibleItemScrollOffset <= 0,
@@ -173,30 +181,24 @@ private fun HomeScreenContent(
                 }
             }
         },
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
         PullToRefreshBox(
+            isRefreshing = loading,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            isRefreshing = isTasksLoading || isTaskModifyInProgress,
-            onRefresh = onRefresh,
+            state = pullToRefreshState,
         ) {
-            Column {
-                NetworkStateIndicator(
-                    isNetworkAvailable = isNetworkAvailable,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                TaskList(
-                    state = lazyListState,
-                    tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
-                    onAddNewTaskClick = onAddNewTaskClicked,
-                    onEditTaskClick = onEditTaskClick,
-                    onMarkItemAsCompleted = onMarkItemAsCompleted,
-                    onDeleteItem = onDeleteItem,
-                )
-            }
+            TaskList(
+                state = lazyListState,
+                tasks = if (!showCompletedTasks) tasks.filter { !it.isCompleted } else tasks,
+                onAddNewTaskClick = onAddNewTaskClicked,
+                onEditTaskClick = onEditTaskClick,
+                onMarkItemAsCompleted = onMarkItemAsCompleted,
+                onDeleteItem = onDeleteItem,
+            )
         }
     }
 }
@@ -235,8 +237,8 @@ private fun HomeScreenContentPreview() {
             darkTheme = false,
             error = Throwable(),
             isNetworkAvailable = false,
-            isTasksLoading = false,
-            isTaskModifyInProgress = false,
+            loading = false,
+            snackBarHostState = SnackbarHostState(),
             onRefresh = {},
             onAddNewTaskClicked = {},
             onEditTaskClick = {},

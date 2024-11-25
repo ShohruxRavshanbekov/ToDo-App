@@ -10,6 +10,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.theme.TodoAppTheme
@@ -19,8 +20,9 @@ import uz.futuresoft.tasks.utils.TodoItemImportance
 fun TaskPropertiesCard(
     importance: String,
     showCalendar: Boolean,
-    modifier: Modifier,
-    initialSelectedDateMillis: Long? = null,
+    initialSelectedDateMillis: Long?,
+    modifier: Modifier = Modifier,
+    keyboardController: SoftwareKeyboardController? = null,
     onImportanceChange: (String) -> Unit,
     onDateSelected: (Long?) -> Unit,
 ) {
@@ -40,6 +42,7 @@ fun TaskPropertiesCard(
             )
             TaskDueDateView(
                 showCalendar = showCalendar,
+                keyboardController = keyboardController,
                 initialSelectedDateMillis = initialSelectedDateMillis,
                 onDateSelected = onDateSelected
             )
@@ -54,7 +57,8 @@ private fun TaskPropertiesCardPreview() {
         TaskPropertiesCard(
             modifier = Modifier,
             importance = TodoItemImportance.NORMAL.value,
-            showCalendar = false,
+            showCalendar = true,
+            initialSelectedDateMillis = null,
             onImportanceChange = {},
             onDateSelected = {},
         )
