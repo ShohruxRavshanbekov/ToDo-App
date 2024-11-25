@@ -20,9 +20,9 @@ import uz.futuresoft.tasks.utils.TodoItemImportance
 fun TaskPropertiesCard(
     importance: String,
     showCalendar: Boolean,
+    initialSelectedDateMillis: Long?,
     modifier: Modifier = Modifier,
     keyboardController: SoftwareKeyboardController? = null,
-    initialSelectedDateMillis: Long? = null,
     onImportanceChange: (String) -> Unit,
     onDateSelected: (Long?) -> Unit,
 ) {
@@ -57,7 +57,8 @@ private fun TaskPropertiesCardPreview() {
         TaskPropertiesCard(
             modifier = Modifier,
             importance = TodoItemImportance.NORMAL.value,
-            showCalendar = false,
+            showCalendar = true,
+            initialSelectedDateMillis = null,
             onImportanceChange = {},
             onDateSelected = {},
         )

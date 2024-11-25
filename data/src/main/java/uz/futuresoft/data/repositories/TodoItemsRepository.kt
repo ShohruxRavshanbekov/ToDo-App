@@ -100,6 +100,7 @@ class TodoItemsRepository(private val context: Context) {
     }
 
     suspend fun updateTask(revision: Int, taskId: String, task: ToDoItem) {
+        val todoDao = localDatabase.todoDao
         val taskToUpdate = SaveTaskRequest(element = task.toTodoDTO())
         val result = runCatching {
             val response = todosApi.updateTask(
@@ -124,11 +125,13 @@ class TodoItemsRepository(private val context: Context) {
                         }
                     }
                 }
+                todoDao.updateTodo(todo = updatedTask.toTodoEntity())
             }
             .onFailure { _error.value = it }
     }
 
     suspend fun deleteTask(revision: Int, taskId: String) {
+        val todoDao = localDatabase.todoDao
         val result = runCatching {
             val response = todosApi.deleteTask(
                 revision = revision,
@@ -143,6 +146,7 @@ class TodoItemsRepository(private val context: Context) {
         result
             .onSuccess { deletedTask ->
                 _tasks.update { currentTasks -> currentTasks.minus(deletedTask) }
+                todoDao.deleteTodo(todo = deletedTask.toTodoEntity())
             }
             .onFailure { _error.value = it }
     }

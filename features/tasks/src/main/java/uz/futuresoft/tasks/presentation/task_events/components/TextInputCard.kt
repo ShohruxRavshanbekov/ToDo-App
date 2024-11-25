@@ -3,6 +3,7 @@ package uz.futuresoft.tasks.presentation.task_events.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -13,6 +14,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import uz.futuresoft.core.ui.theme.TodoAppTheme
@@ -20,7 +24,8 @@ import uz.futuresoft.core.ui.theme.TodoAppTheme
 @Composable
 fun TextInputCard(
     taskText: String,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
+    keyboardController: SoftwareKeyboardController? = null,
     onValueChanged: (String) -> Unit = {},
 ) {
     Card(
@@ -35,6 +40,8 @@ fun TextInputCard(
             onValueChange = onValueChanged,
             modifier = Modifier.fillMaxWidth(),
             minLines = 4,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
             placeholder = {
                 Text(
                     text = "Что надо сделать?",

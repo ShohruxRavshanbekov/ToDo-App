@@ -2,6 +2,7 @@
 
 package uz.futuresoft.tasks.presentation.task_events.components
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +19,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,14 +36,24 @@ import uz.futuresoft.tasks.utils.formatDateMillisTo
 @Composable
 fun TaskDueDateView(
     showCalendar: Boolean,
+    initialSelectedDateMillis: Long?,
     keyboardController: SoftwareKeyboardController? = null,
-    initialSelectedDateMillis: Long? = null,
     onDateSelected: (Long?) -> Unit,
 ) {
-    var isChecked by remember { mutableStateOf(showCalendar) }
-    val datePickerState =
-        rememberDatePickerState(initialSelectedDateMillis = initialSelectedDateMillis)
-    val selectedDate = datePickerState.selectedDateMillis?.formatDateMillisTo("d MMM yyyy")
+    var isChecked by remember { mutableStateOf(false) }
+    var datePickerState = rememberDatePickerState()
+    var selectedDate = datePickerState.selectedDateMillis?.formatDateMillisTo("d MMM yyyy")
+
+    if (initialSelectedDateMillis != null) {
+        datePickerState =
+            rememberDatePickerState(initialSelectedDateMillis = initialSelectedDateMillis)
+        selectedDate =
+            datePickerState.selectedDateMillis?.formatDateMillisTo("d MMM yyyy")
+    }
+
+    LaunchedEffect(key1 = showCalendar) {
+        isChecked = showCalendar
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -85,27 +99,29 @@ fun TaskDueDateView(
             label = "showCalendar",
         ) { state ->
             if (state) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    thickness = 0.5.dp,
-                )
-                DatePicker(
-                    modifier = Modifier.fillMaxWidth(),
-                    state = datePickerState,
-                    showModeToggle = false,
-                    title = null,
-                    headline = null,
-                    colors = DatePickerDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        navigationContentColor = MaterialTheme.colorScheme.secondary,
-                        todayContentColor = MaterialTheme.colorScheme.secondary,
-                        todayDateBorderColor = MaterialTheme.colorScheme.secondary,
-                        selectedYearContentColor = MaterialTheme.colorScheme.secondary,
-                        selectedDayContainerColor = MaterialTheme.colorScheme.secondary.copy(
-                            alpha = 0.5f
-                        ),
+                Column {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        thickness = 0.5.dp,
                     )
-                )
+                    DatePicker(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = datePickerState,
+                        showModeToggle = false,
+                        title = null,
+                        headline = null,
+                        colors = DatePickerDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            navigationContentColor = MaterialTheme.colorScheme.secondary,
+                            todayContentColor = MaterialTheme.colorScheme.secondary,
+                            todayDateBorderColor = MaterialTheme.colorScheme.secondary,
+                            selectedYearContentColor = MaterialTheme.colorScheme.secondary,
+                            selectedDayContainerColor = MaterialTheme.colorScheme.secondary.copy(
+                                alpha = 0.5f
+                            ),
+                        )
+                    )
+                }
             }
         }
     }
@@ -115,6 +131,10 @@ fun TaskDueDateView(
 @Composable
 private fun TaskDueDateViewPreview() {
     TodoAppTheme {
-        TaskDueDateView(showCalendar = true, onDateSelected = {})
+        TaskDueDateView(
+            showCalendar = true,
+            initialSelectedDateMillis = null,
+            onDateSelected = {},
+        )
     }
 }
